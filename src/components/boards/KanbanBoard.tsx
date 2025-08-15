@@ -379,7 +379,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ board, project, onBack }) => 
                               </button>
                               <button
                                   onClick={() => setEditingStageAutomation(s)}
-                                  className="p-1.5 text-purple-500 hover:text-purple-700 hover:bg-purple-100 rounded-lg transition-all duration-200"
+                                  className="p-1.5 text-purple-600 hover:text-purple-800 hover:bg-purple-100 rounded-lg transition-all duration-200 bg-purple-50 border border-purple-200"
                                   title="Настроить автоматизацию"
                               >
                                 <Zap className="h-4 w-4" />
