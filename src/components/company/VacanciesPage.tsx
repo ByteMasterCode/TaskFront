@@ -217,10 +217,6 @@ const VacanciesPage: React.FC = () => {
               <option value="closed">Закрыта</option>
               <option value="cancelled">Отменена</option>
             </select>
-            <button className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-xl font-medium flex items-center space-x-2 shadow-lg hover:shadow-xl transition-all duration-200">
-              <Plus className="h-5 w-5" />
-              <span>Создать вакансию</span>
-            </button>
             <button 
               onClick={() => setShowCreateModal(true)}
               className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-xl font-medium flex items-center space-x-2 shadow-lg hover:shadow-xl transition-all duration-200"
