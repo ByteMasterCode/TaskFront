@@ -43,8 +43,6 @@ import {
 } from '../../utils/structuredComment';
 import FigmaEmbed from './FigmaEmbed';
 import LinksList from './LinksList';
-import FigmaEmbed from './FigmaEmbed';
-import LinksList from './LinksList';
 
 interface StructuredCommentRendererProps {
   comment: StructuredComment;
