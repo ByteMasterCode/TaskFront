@@ -283,9 +283,11 @@ const WorkersPage: React.FC = () => {
                 }`}
               >
                 <List className="h-5 w-5" />
-              onClick={() => setShowCreateModal(true)}
+              </button>
             </div>
-            <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-medium flex items-center space-x-2 shadow-lg hover:shadow-xl transition-all duration-200">
+            <button 
+              onClick={() => setShowCreateModal(true)}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-medium flex items-center space-x-2 shadow-lg hover:shadow-xl transition-all duration-200">
               <Plus className="h-5 w-5" />
               <span>Добавить сотрудника</span>
             </button>
