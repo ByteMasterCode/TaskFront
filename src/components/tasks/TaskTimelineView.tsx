@@ -232,35 +232,3 @@ const TaskTimelineView: React.FC<TaskTimelineViewProps> = ({ task }) => {
 };
 
 export default TaskTimelineView;
-                  {getTransitionLabel(transition)}
-                </h4>
-                <span className="text-xs text-gray-500">
-                  {new Date(transition.createdAt).toLocaleString('ru-RU')}
-                </span>
-              </div>
-
-              {transition.user && (
-                <div className="flex items-center space-x-2 mb-2">
-                  <div className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center">
-                    <User className="h-3 w-3 text-gray-600" />
-                  </div>
-                  <span className="text-sm text-gray-700">
-                    {transition.user.name || transition.user.phone}
-                  </span>
-                </div>
-              )}
-
-              {transition.comment && (
-                <div className="bg-gray-50 rounded-lg p-3 mt-2">
-                  <p className="text-sm text-gray-700">{transition.comment}</p>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-};
-
-export default TaskTimelineView;
