@@ -37,8 +37,8 @@ const AttendancePage: React.FC = () => {
         hrApiService.getWorkers(),
         hrApiService.getDepartments()
       ]);
-      setWorkers(workersData);
-      setDepartments(departmentsData);
+      setWorkers(Array.isArray(workersData) ? workersData : []);
+      setDepartments(Array.isArray(departmentsData) ? departmentsData : []);
 
       // Load attendance for selected department or all
       if (filterDepartment) {
@@ -50,6 +50,8 @@ const AttendancePage: React.FC = () => {
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Ошибка загрузки данных');
+      setWorkers([]);
+      setDepartments([]);
     } finally {
       setLoading(false);
     }
@@ -199,7 +201,7 @@ const AttendancePage: React.FC = () => {
               className="px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
             >
               <option value="">Все отделы</option>
-              {departments.map(dept => (
+              {Array.isArray(departments) && departments.map(dept => (
                 <option key={dept.id} value={dept.id}>{dept.name}</option>
               ))}
             </select>
