@@ -341,9 +341,6 @@ const VacanciesPage: React.FC = () => {
             {searchQuery ? 'Попробуйте изменить параметры поиска' : 'Создайте первую вакансию'}
           </p>
           {!searchQuery && (
-            <button className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-xl font-medium">
-              Создать вакансию
-            </button>
             <button 
               onClick={() => setShowCreateModal(true)}
               className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-xl font-medium"
