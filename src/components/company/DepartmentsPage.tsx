@@ -28,9 +28,13 @@ const DepartmentsPage: React.FC = () => {
   const loadDepartments = async () => {
     try {
       setLoading(true);
+      console.log('Loading departments...');
       const data = await hrApiService.getDepartmentHierarchy();
+      console.log('Departments API response:', data);
       setDepartments(Array.isArray(data) ? data : []);
+      console.log('Departments state set to:', Array.isArray(data) ? data : []);
     } catch (err) {
+      console.error('Error loading departments:', err);
       setError(err instanceof Error ? err.message : 'Ошибка загрузки отделов');
       setDepartments([]);
     } finally {
@@ -45,10 +49,13 @@ const DepartmentsPage: React.FC = () => {
     status?: string;
   }) => {
     try {
+      console.log('Creating department with data:', data);
       await hrApiService.createDepartment(data);
+      console.log('Department created successfully');
       await loadDepartments(); // Перезагружаем список
       setShowCreateModal(false);
     } catch (err) {
+      console.error('Error creating department:', err);
       throw err;
     }
   };
@@ -239,10 +246,12 @@ const DepartmentsPage: React.FC = () => {
         
         {departments.length > 0 ? (
           <div>
+            {console.log('Rendering departments:', departments)}
             {departments.map(dept => renderDepartment(dept))}
           </div>
         ) : (
           <div className="text-center py-12">
+            {console.log('No departments to render, departments:', departments)}
             <Building2 className="h-16 w-16 text-gray-300 mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-gray-900 mb-2">Отделы не найдены</h3>
             <p className="text-gray-600 mb-4">Создайте первый отдел для начала работы</p>

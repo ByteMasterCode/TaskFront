@@ -62,6 +62,7 @@ class HRApiService {
   }
 
   getDepartmentHierarchy(): Promise<Department[]> {
+    console.log('Making API request to /workers/department/hierarchy');
     return this.request<Department[]>('/workers/department/hierarchy');
   }
 
@@ -71,6 +72,7 @@ class HRApiService {
     parentId?: string;
     status?: string;
   }): Promise<Department> {
+    console.log('Making API request to create department:', data);
     return this.request<Department>('/workers/department', {
       method: 'POST',
       body: JSON.stringify(data)
