@@ -14,7 +14,8 @@ import {
   Link as LinkIcon,
   Clock,
   X,
-  Send
+  Send,
+  FileText
 } from 'lucide-react';
 import { Board, Project, Task, WorkflowStage, Label, AutomationConfig, TaskLink } from '../../types';
 import { apiService } from '../../services/api';
@@ -61,6 +62,18 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ board, project, onBack }) => 
     originBoardId: string;
   } | null>(null);
 
+  // Получение последнего изменения задачи для отображения как описание
+  const getLatestTaskUpdate = async (taskId: string) => {
+    try {
+      const transitions = await apiService.getTaskTransitions(taskId);
+      const latestComment = transitions
+        .filter(t => t.comment && t.comment.trim())
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0];
+      return latestComment?.comment || null;
+    } catch {
+      return null;
+    }
+  };
   useEffect(() => {
     loadBoardData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -625,12 +638,8 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ board, project, onBack }) => 
                 </div>
               </div>
 
-              {selectedTaskForDetails.description && (
-                <div className="mb-6">
-                  <h3 className="font-semibold text-gray-900 mb-2">Описание</h3>
-                  <p className="text-gray-700 whitespace-pre-wrap">{selectedTaskForDetails.description}</p>
-                </div>
-              )}
+              {/* Показываем последнее изменение как описание */}
+              <TaskDescriptionView task={selectedTaskForDetails} />
 
               <div className="grid grid-cols-2 gap-6">
                 <div>
@@ -675,4 +684,154 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ board, project, onBack }) => 
   );
 };
 
+// Компонент для отображения описания задачи с последним изменением
+const TaskDescriptionView: React.FC<{ task: Task }> = ({ task }) => {
+  const [latestUpdate, setLatestUpdate] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadLatestUpdate = async () => {
+      try {
+        const transitions = await apiService.getTaskTransitions(task.id);
+        const latestComment = transitions
+          .filter(t => t.comment && t.comment.trim())
+          .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0];
+        setLatestUpdate(latestComment?.comment || null);
+      } catch {
+        setLatestUpdate(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadLatestUpdate();
+  }, [task.id]);
+
+  const parseStructuredContent = (content: string) => {
+    if (!content.includes('**') && !content.includes('#') && !content.includes('🔌') && !content.includes('🗄️')) {
+      return { isStructured: false, content };
+    }
+
+    const sections: { type: string; title: string; content: string; icon: React.ReactNode }[] = [];
+    const lines = content.split('\n');
+    let currentSection: { type: string; title: string; content: string; icon: React.ReactNode } | null = null;
+
+    for (const line of lines) {
+      if (line.startsWith('# ') || line.startsWith('## ') || line.includes('**') && line.includes(':')) {
+        if (currentSection) {
+          sections.push(currentSection);
+        }
+        const title = line.replace(/^#+\s*/, '').replace(/\*\*/g, '').replace(/🔌|🗄️|🎨|⚠️|🚀|📊/g, '').trim();
+        let icon = <FileText className="h-4 w-4" />;
+        let type = 'default';
+
+        if (line.includes('📊') || title.includes('Статус')) {
+          icon = <CheckCircle className="h-4 w-4" />;
+          type = 'status';
+        } else if (line.includes('🔌') || title.includes('API')) {
+          icon = <Code className="h-4 w-4" />;
+          type = 'api';
+        } else if (line.includes('🗄️') || title.includes('База')) {
+          icon = <Database className="h-4 w-4" />;
+          type = 'database';
+        } else if (line.includes('🎨') || title.includes('Дизайн')) {
+          icon = <Palette className="h-4 w-4" />;
+          type = 'design';
+        } else if (line.includes('⚠️') || title.includes('Проблемы')) {
+          icon = <AlertTriangle className="h-4 w-4" />;
+          type = 'quality';
+        }
+
+        currentSection = { type, title, content: '', icon };
+      } else if (currentSection) {
+        currentSection.content += line + '\n';
+      }
+    }
+
+    if (currentSection) {
+      sections.push(currentSection);
+    }
+
+    return { isStructured: true, sections };
+  };
+
+  if (loading) {
+    return (
+      <div className="mb-6">
+        <h3 className="font-semibold text-gray-900 mb-2 flex items-center space-x-2">
+          <FileText className="h-4 w-4" />
+          <span>Описание</span>
+        </h3>
+        <div className="bg-gray-50 rounded-lg p-4">
+          <div className="animate-pulse flex space-x-4">
+            <div className="rounded-full bg-gray-300 h-4 w-4"></div>
+            <div className="flex-1 space-y-2">
+              <div className="h-4 bg-gray-300 rounded w-3/4"></div>
+              <div className="h-4 bg-gray-300 rounded w-1/2"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const displayContent = latestUpdate || task.description;
+  if (!displayContent) {
+    return (
+      <div className="mb-6">
+        <h3 className="font-semibold text-gray-900 mb-2 flex items-center space-x-2">
+          <FileText className="h-4 w-4" />
+          <span>Описание</span>
+        </h3>
+        <div className="bg-gray-50 rounded-lg p-4 text-center text-gray-500">
+          Описание отсутствует
+        </div>
+      </div>
+    );
+  }
+
+  const parsed = parseStructuredContent(displayContent);
+
+  return (
+    <div className="mb-6">
+      <h3 className="font-semibold text-gray-900 mb-2 flex items-center space-x-2">
+        <FileText className="h-4 w-4" />
+        <span>Описание {latestUpdate ? '(последнее обновление)' : ''}</span>
+      </h3>
+      
+      {!parsed.isStructured ? (
+        <div className="bg-gray-50 rounded-lg p-4">
+          <p className="text-gray-700 whitespace-pre-wrap">{displayContent}</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {parsed.sections?.map((section, index) => {
+            const getSectionColor = (type: string) => {
+              switch (type) {
+                case 'status': return 'from-green-50 to-emerald-100 border-green-300';
+                case 'api': return 'from-blue-50 to-indigo-100 border-blue-300';
+                case 'database': return 'from-purple-50 to-violet-100 border-purple-300';
+                case 'quality': return 'from-red-50 to-pink-100 border-red-300';
+                case 'design': return 'from-pink-50 to-rose-50 border-pink-200';
+                default: return 'from-gray-50 to-slate-100 border-gray-300';
+              }
+            };
+
+            return (
+              <div key={index} className={`bg-gradient-to-br ${getSectionColor(section.type)} rounded-xl p-4 border shadow-sm`}>
+                <div className="flex items-center space-x-2 mb-3">
+                  {section.icon}
+                  <h4 className="font-bold text-gray-900 text-sm">{section.title}</h4>
+                </div>
+                <div className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">
+                  {section.content.trim()}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+};
 export default KanbanBoard;
