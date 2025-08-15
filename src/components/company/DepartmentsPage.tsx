@@ -27,9 +27,10 @@ const DepartmentsPage: React.FC = () => {
     try {
       setLoading(true);
       const data = await hrApiService.getDepartmentHierarchy();
-      setDepartments(data);
+      setDepartments(Array.isArray(data) ? data : []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Ошибка загрузки отделов');
+      setDepartments([]);
     } finally {
       setLoading(false);
     }
