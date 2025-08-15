@@ -1,5 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Clock, User, ArrowRight, MessageSquare, Tag, UserPlus, UserMinus, CheckCircle, GitBranch, AlertTriangle, Code, Database, Palette, Server, Globe, Smartphone, Monitor, Chrome, Zap, Shield, Activity, FileText, Settings, Download, Plus, X } from 'lucide-react';
+
+// Browser icons (using available Lucide icons as alternatives)
+const Firefox = () => <Globe className="h-4 w-4" />;
+const Edge = () => <Monitor className="h-4 w-4" />;
+const Safari = () => <Globe className="h-4 w-4" />;
 import { Task, TaskTransition } from '../../types';
 import { apiService } from '../../services/api';
 import { isStructuredComment, deserializeComment } from '../../utils/structuredComment';
