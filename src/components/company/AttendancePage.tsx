@@ -43,7 +43,7 @@ const AttendancePage: React.FC = () => {
       // Load attendance for selected department or all
       if (filterDepartment) {
         const attendanceData = await hrApiService.getDepartmentAttendance(filterDepartment, selectedDate);
-        setAttendances(attendanceData);
+        setAttendances(Array.isArray(attendanceData) ? attendanceData : []);
       } else {
         // For now, we'll load attendance for all workers (this might need optimization)
         setAttendances([]);
@@ -52,6 +52,7 @@ const AttendancePage: React.FC = () => {
       setError(err instanceof Error ? err.message : 'Ошибка загрузки данных');
       setWorkers([]);
       setDepartments([]);
+      setAttendances([]);
     } finally {
       setLoading(false);
     }

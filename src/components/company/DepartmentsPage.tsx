@@ -12,12 +12,14 @@ import {
 } from 'lucide-react';
 import { Department } from '../../types';
 import { hrApiService } from '../../services/hrApi';
+import CreateDepartmentModal from './CreateDepartmentModal';
 
 const DepartmentsPage: React.FC = () => {
   const [departments, setDepartments] = useState<Department[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>('');
   const [expandedDepts, setExpandedDepts] = useState<Set<string>>(new Set());
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
   useEffect(() => {
     loadDepartments();
@@ -33,6 +35,21 @@ const DepartmentsPage: React.FC = () => {
       setDepartments([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleCreateDepartment = async (data: {
+    name: string;
+    description?: string;
+    parentId?: string;
+    status?: string;
+  }) => {
+    try {
+      await hrApiService.createDepartment(data);
+      await loadDepartments(); // Перезагружаем список
+      setShowCreateModal(false);
+    } catch (err) {
+      throw err;
     }
   };
 
@@ -143,7 +160,10 @@ const DepartmentsPage: React.FC = () => {
           <h2 className="text-2xl font-bold text-gray-900">Структура отделов</h2>
           <p className="text-gray-600">Управление организационной структурой компании</p>
         </div>
-        <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-medium flex items-center space-x-2 shadow-lg hover:shadow-xl transition-all duration-200">
+        <button 
+          onClick={() => setShowCreateModal(true)}
+          className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-medium flex items-center space-x-2 shadow-lg hover:shadow-xl transition-all duration-200"
+        >
           <Plus className="h-5 w-5" />
           <span>Создать отдел</span>
         </button>
@@ -226,12 +246,24 @@ const DepartmentsPage: React.FC = () => {
             <Building2 className="h-16 w-16 text-gray-300 mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-gray-900 mb-2">Отделы не найдены</h3>
             <p className="text-gray-600 mb-4">Создайте первый отдел для начала работы</p>
-            <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-medium">
+            <button 
+              onClick={() => setShowCreateModal(true)}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-medium"
+            >
               Создать отдел
             </button>
           </div>
         )}
       </div>
+
+      {/* Create Department Modal */}
+      {showCreateModal && (
+        <CreateDepartmentModal
+          onClose={() => setShowCreateModal(false)}
+          onSubmit={handleCreateDepartment}
+          departments={departments}
+        />
+      )}
     </div>
   );
 };
