@@ -374,9 +374,6 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ board, project, onBack }) => 
                               >
                                 <Plus className="h-4 w-4" />
                               </button>
-                              <button className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-200 rounded-lg transition-all duration-200">
-                                <MoreHorizontal className="h-4 w-4" />
-                              </button>
                               <button
                                   onClick={() => setEditingStageAutomation(s)}
                                   className="p-1.5 text-white bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md flex-shrink-0"
