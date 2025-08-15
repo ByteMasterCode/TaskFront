@@ -177,7 +177,7 @@ class HRApiService {
     if (status) params.set('status', status);
     const query = params.toString();
     console.log('Making API request to get workers');
-    return this.request<Worker[]>(`/workers${query ? `?${query}` : ''}`).catch(() => {
+    return this.request<Worker[]>(`/workers/worker${query ? `?${query}` : ''}`).catch(() => {
       // Заглушка для списка сотрудников
       console.log('Get workers API not implemented, using mock data');
       return [
@@ -238,7 +238,7 @@ class HRApiService {
   }
 
   getWorker(id: string): Promise<Worker> {
-    return this.request<Worker>(`/workers/${id}`);
+    return this.request<Worker>(`/workers/worker/${id}`);
   }
 
   createWorker(data: {
@@ -259,7 +259,7 @@ class HRApiService {
     notes?: string;
   }): Promise<Worker> {
     console.log('Making API request to create worker:', data);
-    return this.request<Worker>('/workers', {
+    return this.request<Worker>('/workers/worker', {
       method: 'POST',
       body: JSON.stringify(data)
     }).catch(() => {
@@ -291,7 +291,7 @@ class HRApiService {
 
   updateWorker(id: string, data: Partial<Worker>): Promise<Worker> {
     console.log('Making API request to update worker:', id, data);
-    return this.request<Worker>(`/workers/${id}`, {
+    return this.request<Worker>(`/workers/worker/${id}`, {
       method: 'PUT',
       body: JSON.stringify(data)
     }).catch(() => {
@@ -313,7 +313,7 @@ class HRApiService {
     reason: string;
   }): Promise<void> {
     console.log('Making API request to transfer worker:', data);
-    return this.request<void>('/workers/transfer', {
+    return this.request<void>('/workers/worker/transfer', {
       method: 'POST',
       body: JSON.stringify(data)
     }).catch(() => {
@@ -329,7 +329,7 @@ class HRApiService {
     reason: string;
   }): Promise<void> {
     console.log('Making API request to dismiss worker:', data);
-    return this.request<void>('/workers/dismiss', {
+    return this.request<void>('/workers/worker/dismiss', {
       method: 'POST',
       body: JSON.stringify(data)
     }).catch(() => {
