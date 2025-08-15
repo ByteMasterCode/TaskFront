@@ -28,7 +28,8 @@ import {
   Star,
   TrendingUp,
   Award,
-  Target
+  Target,
+  ExternalLink
 } from 'lucide-react';
 import {
   StructuredComment,
@@ -37,8 +38,13 @@ import {
   DatabaseField,
   DesignElement,
   QualityMetric,
-  BrowserSupport
+  BrowserSupport,
+  Link
 } from '../../utils/structuredComment';
+import FigmaEmbed from './FigmaEmbed';
+import LinksList from './LinksList';
+import FigmaEmbed from './FigmaEmbed';
+import LinksList from './LinksList';
 
 interface StructuredCommentRendererProps {
   comment: StructuredComment;
@@ -437,6 +443,11 @@ const StructuredCommentRenderer: React.FC<StructuredCommentRendererProps> = ({
             {section.type === 'notes' && section.data.text && (
               <div className="bg-white rounded p-2 border border-gray-200">
                 <p className="text-xs text-gray-700 whitespace-pre-wrap">{section.data.text}</p>
+              </div>
+            )}
+            {section.type === 'notes' && section.data.links && (
+              <div className="mt-2">
+                <LinksList links={section.data.links} />
               </div>
             )}
           </div>
