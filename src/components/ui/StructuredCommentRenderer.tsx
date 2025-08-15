@@ -451,6 +451,13 @@ const StructuredCommentRenderer: React.FC<StructuredCommentRendererProps> = ({
               </div>
             )}
           </div>
+          
+          {/* Global Links for section */}
+          {section.data.links && section.data.links.length > 0 && (
+            <div className="mt-3">
+              <LinksList links={section.data.links} compact={true} />
+            </div>
+          )}
         </div>
       ))}
     </div>
