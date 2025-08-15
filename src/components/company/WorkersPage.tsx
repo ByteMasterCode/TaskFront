@@ -42,10 +42,12 @@ const WorkersPage: React.FC = () => {
         hrApiService.getWorkers(),
         hrApiService.getDepartments()
       ]);
-      setWorkers(workersData);
-      setDepartments(departmentsData);
+      setWorkers(Array.isArray(workersData) ? workersData : []);
+      setDepartments(Array.isArray(departmentsData) ? departmentsData : []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Ошибка загрузки данных');
+      setWorkers([]);
+      setDepartments([]);
     } finally {
       setLoading(false);
     }
