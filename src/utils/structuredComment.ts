@@ -46,6 +46,8 @@ export interface DesignElement {
   status: 'draft' | 'review' | 'approved' | 'implemented';
   browserSupport: BrowserSupport;
   responsive: boolean;
+  figmaUrl?: string;
+  links?: Link[];
 }
 
 export interface BrowserSupport {
@@ -63,6 +65,14 @@ export interface QualityMetric {
   unit?: string;
   status: 'good' | 'warning' | 'critical';
   benchmark?: string | number;
+}
+
+export interface Link {
+  id: string;
+  title: string;
+  url: string;
+  type: 'external' | 'internal' | 'figma' | 'github' | 'docs';
+  description?: string;
 }
 
 // Сериализация в строку
