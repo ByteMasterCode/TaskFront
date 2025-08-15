@@ -208,6 +208,7 @@ const ProjectsPage: React.FC = () => {
           {filteredProjects.map((project) => (
             <div
               key={project.id}
+             onClick={() => setSelectedProject(project)}
               className="bg-white rounded-3xl shadow-lg border border-gray-100 hover:shadow-2xl transition-all duration-300 cursor-pointer group overflow-hidden transform hover:-translate-y-1"
             >
               {/* Project Header */}
@@ -277,14 +278,17 @@ const ProjectsPage: React.FC = () => {
 
                 {/* Actions */}
                 <div className="flex items-center space-x-2">
-                  <button
-                    onClick={() => setSelectedProject(project)}
-                    className="flex-1 bg-blue-50 hover:bg-blue-100 text-blue-700 py-2 px-4 rounded-lg font-medium transition-colors flex items-center justify-center space-x-2"
-                  >
+                  <div className="flex-1 bg-blue-50 text-blue-700 py-2 px-4 rounded-lg font-medium flex items-center justify-center space-x-2 pointer-events-none">
                     <Eye className="w-4 h-4" />
-                    <span>Открыть</span>
-                  </button>
-                  <button className="bg-gray-50 hover:bg-gray-100 text-gray-700 p-2 rounded-lg transition-colors">
+                    <span>Нажмите для открытия</span>
+                  </div>
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      // Settings action
+                    }}
+                    className="bg-gray-50 hover:bg-gray-100 text-gray-700 p-2 rounded-lg transition-colors"
+                  >
                     <Settings className="w-4 h-4" />
                   </button>
                   <button 
