@@ -45,7 +45,7 @@ const DepartmentsPage: React.FC = () => {
   const handleCreateDepartment = async (data: {
     name: string;
     description?: string;
-    parentId?: string;
+    parentId?: string | null;
     status?: string;
   }) => {
     try {

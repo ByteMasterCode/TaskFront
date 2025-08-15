@@ -41,7 +41,7 @@ const CreateDepartmentModal: React.FC<CreateDepartmentModalProps> = ({
       await onSubmit({
         name: formData.name.trim(),
         description: formData.description.trim() || undefined,
-        parentId: formData.parentId || undefined,
+        parentId: formData.parentId || null,
         status: formData.status
       });
     } catch (err) {

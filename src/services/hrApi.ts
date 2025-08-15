@@ -69,7 +69,7 @@ class HRApiService {
   createDepartment(data: {
     name: string;
     description?: string;
-    parentId?: string;
+    parentId?: string | null;
     status?: string;
   }): Promise<Department> {
     console.log('Making API request to create department:', data);
