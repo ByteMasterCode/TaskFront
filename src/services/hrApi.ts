@@ -90,11 +90,11 @@ class HRApiService {
     if (departmentId) params.set('departmentId', departmentId);
     if (status) params.set('status', status);
     const query = params.toString();
-    return this.request<Worker[]>(`/workers/worker${query ? `?${query}` : ''}`);
+    return this.request<Worker[]>(`/workers${query ? `?${query}` : ''}`);
   }
 
   getWorker(id: string): Promise<Worker> {
-    return this.request<Worker>(`/workers/worker/${id}`);
+    return this.request<Worker>(`/workers/${id}`);
   }
 
   createWorker(data: {
@@ -114,14 +114,14 @@ class HRApiService {
     pieceRate?: number;
     notes?: string;
   }): Promise<Worker> {
-    return this.request<Worker>('/workers/worker', {
+    return this.request<Worker>('/workers', {
       method: 'POST',
       body: JSON.stringify(data)
     });
   }
 
   updateWorker(id: string, data: Partial<Worker>): Promise<Worker> {
-    return this.request<Worker>(`/workers/worker/${id}`, {
+    return this.request<Worker>(`/workers/${id}`, {
       method: 'PUT',
       body: JSON.stringify(data)
     });
@@ -134,7 +134,7 @@ class HRApiService {
     effectiveDate: string;
     reason: string;
   }): Promise<void> {
-    return this.request<void>('/workers/worker/transfer', {
+    return this.request<void>('/workers/transfer', {
       method: 'POST',
       body: JSON.stringify(data)
     });
@@ -145,7 +145,7 @@ class HRApiService {
     dismissalDate: string;
     reason: string;
   }): Promise<void> {
-    return this.request<void>('/workers/worker/dismiss', {
+    return this.request<void>('/workers/dismiss', {
       method: 'POST',
       body: JSON.stringify(data)
     });
@@ -232,11 +232,11 @@ class HRApiService {
     if (departmentId) params.set('departmentId', departmentId);
     if (status) params.set('status', status);
     const query = params.toString();
-    return this.request<Vacancy[]>(`/workers/vacancy${query ? `?${query}` : ''}`);
+    return this.request<Vacancy[]>(`/workers/vacancies${query ? `?${query}` : ''}`);
   }
 
   getVacancy(id: string): Promise<Vacancy> {
-    return this.request<Vacancy>(`/workers/vacancy/${id}`);
+    return this.request<Vacancy>(`/workers/vacancies/${id}`);
   }
 
   createVacancy(data: {
@@ -253,21 +253,21 @@ class HRApiService {
     responsibilities?: string;
     openDate: string;
   }): Promise<Vacancy> {
-    return this.request<Vacancy>('/workers/vacancy', {
+    return this.request<Vacancy>('/workers/vacancies', {
       method: 'POST',
       body: JSON.stringify(data)
     });
   }
 
   updateVacancy(id: string, data: Partial<Vacancy>): Promise<Vacancy> {
-    return this.request<Vacancy>(`/workers/vacancy/${id}`, {
+    return this.request<Vacancy>(`/workers/vacancies/${id}`, {
       method: 'PUT',
       body: JSON.stringify(data)
     });
   }
 
   getVacancyStats(id: string): Promise<any> {
-    return this.request<any>(`/workers/vacancy/${id}/stats`);
+    return this.request<any>(`/workers/vacancies/${id}/stats`);
   }
 
   // ---------- CANDIDATES ----------
@@ -276,11 +276,11 @@ class HRApiService {
     if (vacancyId) params.set('vacancyId', vacancyId);
     if (status) params.set('status', status);
     const query = params.toString();
-    return this.request<Candidate[]>(`/workers/candidate${query ? `?${query}` : ''}`);
+    return this.request<Candidate[]>(`/workers/candidates${query ? `?${query}` : ''}`);
   }
 
   getCandidate(id: string): Promise<Candidate> {
-    return this.request<Candidate>(`/workers/candidate/${id}`);
+    return this.request<Candidate>(`/workers/candidates/${id}`);
   }
 
   createCandidate(data: {
@@ -298,7 +298,7 @@ class HRApiService {
     expectedSalary?: number;
     notes?: string;
   }): Promise<Candidate> {
-    return this.request<Candidate>('/workers/candidate', {
+    return this.request<Candidate>('/workers/candidates', {
       method: 'POST',
       body: JSON.stringify(data)
     });
@@ -307,13 +307,13 @@ class HRApiService {
   updateCandidateStatus(id: string, status: CandidateStatus, notes?: string): Promise<Candidate> {
     const params = new URLSearchParams({ status });
     if (notes) params.set('notes', notes);
-    return this.request<Candidate>(`/workers/candidate/${id}/status?${params.toString()}`, {
+    return this.request<Candidate>(`/workers/candidates/${id}/status?${params.toString()}`, {
       method: 'PUT'
     });
   }
 
   rejectCandidate(id: string, reason: string): Promise<void> {
-    return this.request<void>(`/workers/candidate/${id}/reject?reason=${encodeURIComponent(reason)}`, {
+    return this.request<void>(`/workers/candidates/${id}/reject?reason=${encodeURIComponent(reason)}`, {
       method: 'POST'
     });
   }
@@ -321,7 +321,7 @@ class HRApiService {
   rateCandidate(id: string, rating: number, notes?: string): Promise<void> {
     const params = new URLSearchParams({ rating: rating.toString() });
     if (notes) params.set('notes', notes);
-    return this.request<void>(`/workers/candidate/${id}/rate?${params.toString()}`, {
+    return this.request<void>(`/workers/candidates/${id}/rate?${params.toString()}`, {
       method: 'POST'
     });
   }
@@ -338,7 +338,7 @@ class HRApiService {
     paymentType: PaymentType;
     baseSalary?: number;
   }): Promise<Worker> {
-    return this.request<Worker>(`/workers/candidate/${id}/hire`, {
+    return this.request<Worker>(`/workers/candidates/${id}/hire`, {
       method: 'POST',
       body: JSON.stringify(workerData)
     });
@@ -350,7 +350,7 @@ class HRApiService {
     if (candidateId) params.set('candidateId', candidateId);
     if (status) params.set('status', status);
     const query = params.toString();
-    return this.request<Interview[]>(`/workers/interview${query ? `?${query}` : ''}`);
+    return this.request<Interview[]>(`/workers/interviews${query ? `?${query}` : ''}`);
   }
 
   createInterview(data: {
@@ -360,7 +360,7 @@ class HRApiService {
     interviewerPosition: string;
     notes?: string;
   }): Promise<Interview> {
-    return this.request<Interview>('/workers/interview', {
+    return this.request<Interview>('/workers/interviews', {
       method: 'POST',
       body: JSON.stringify(data)
     });
@@ -376,7 +376,7 @@ class HRApiService {
     recommendation?: 'hire' | 'reject' | 'consider';
     feedback?: string;
   }): Promise<Interview> {
-    return this.request<Interview>(`/workers/interview/${id}/complete`, {
+    return this.request<Interview>(`/workers/interviews/${id}/complete`, {
       method: 'PUT',
       body: JSON.stringify(data)
     });
@@ -384,19 +384,19 @@ class HRApiService {
 
   // ---------- SALARY ----------
   calculateSalary(workerId: string, period: string): Promise<SalaryCalculation> {
-    return this.request<SalaryCalculation>(`/workers/salary/calculate?workerId=${workerId}&period=${period}`, {
+    return this.request<SalaryCalculation>(`/workers/salary/calculate/${workerId}?period=${period}`, {
       method: 'POST'
     });
   }
 
   approveSalary(salaryId: string): Promise<void> {
-    return this.request<void>(`/workers/salary/${salaryId}/approve`, {
+    return this.request<void>(`/workers/salary/approve/${salaryId}`, {
       method: 'POST'
     });
   }
 
   paySalary(salaryId: string, paymentDate: string): Promise<void> {
-    return this.request<void>(`/workers/salary/${salaryId}/pay?paymentDate=${paymentDate}`, {
+    return this.request<void>(`/workers/salary/pay/${salaryId}?paymentDate=${paymentDate}`, {
       method: 'POST'
     });
   }
@@ -416,20 +416,20 @@ class HRApiService {
     pieceRate: number;
     qualityBonus?: number;
   }): Promise<PieceworkPayment> {
-    return this.request<PieceworkPayment>(`/workers/piecework/calculate?workerId=${workerId}&period=${period}`, {
+    return this.request<PieceworkPayment>(`/workers/piecework/calculate/${workerId}?period=${period}`, {
       method: 'POST',
       body: JSON.stringify(data)
     });
   }
 
   approvePiecework(paymentId: string): Promise<void> {
-    return this.request<void>(`/workers/piecework/${paymentId}/approve`, {
+    return this.request<void>(`/workers/piecework/approve/${paymentId}`, {
       method: 'POST'
     });
   }
 
   payPiecework(paymentId: string, paymentDate: string): Promise<void> {
-    return this.request<void>(`/workers/piecework/${paymentId}/pay?paymentDate=${paymentDate}`, {
+    return this.request<void>(`/workers/piecework/pay/${paymentId}?paymentDate=${paymentDate}`, {
       method: 'POST'
     });
   }
@@ -440,13 +440,6 @@ class HRApiService {
     return this.request<any>(`/workers/recruitment/report?${params.toString()}`);
   }
 
-  getWorkerReport(departmentId?: string, status?: WorkerStatus): Promise<any> {
-    const params = new URLSearchParams();
-    if (departmentId) params.set('departmentId', departmentId);
-    if (status) params.set('status', status);
-    const query = params.toString();
-    return this.request<any>(`/workers/worker/report${query ? `?${query}` : ''}`);
-  }
 }
 
 export const hrApiService = new HRApiService();
