@@ -8,11 +8,16 @@ import {
   ChevronRight,
   ChevronDown,
   Folder,
-  FolderOpen
+  FolderOpen,
+  Eye,
+  ToggleLeft,
+  AlertTriangle
 } from 'lucide-react';
 import { Department } from '../../types';
 import { hrApiService } from '../../services/hrApi';
 import CreateDepartmentModal from './CreateDepartmentModal';
+import EditDepartmentModal from './EditDepartmentModal';
+import DepartmentDetailsModal from './DepartmentDetailsModal';
 
 const DepartmentsPage: React.FC = () => {
   const [departments, setDepartments] = useState<Department[]>([]);
@@ -20,6 +25,8 @@ const DepartmentsPage: React.FC = () => {
   const [error, setError] = useState<string>('');
   const [expandedDepts, setExpandedDepts] = useState<Set<string>>(new Set());
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [editingDepartment, setEditingDepartment] = useState<Department | null>(null);
+  const [viewingDepartment, setViewingDepartment] = useState<Department | null>(null);
 
   useEffect(() => {
     loadDepartments();
@@ -60,6 +67,58 @@ const DepartmentsPage: React.FC = () => {
     }
   };
 
+  const handleEditDepartment = async (id: string, data: {
+    name: string;
+    description?: string;
+    parentId?: string | null;
+    status: string;
+  }) => {
+    try {
+      console.log('Updating department:', id, data);
+      await hrApiService.updateDepartment(id, data);
+      console.log('Department updated successfully');
+      await loadDepartments();
+      setEditingDepartment(null);
+    } catch (err) {
+      console.error('Error updating department:', err);
+      throw err;
+    }
+  };
+
+  const handleDeleteDepartment = async (department: Department) => {
+    // Проверяем, есть ли сотрудники или подотделы
+    const hasWorkers = department.workers && department.workers.length > 0;
+    const hasChildren = department.children && department.children.length > 0;
+    
+    if (hasWorkers || hasChildren) {
+      alert('Нельзя удалить отдел, в котором есть сотрудники или подотделы. Сначала переместите их в другие отделы.');
+      return;
+    }
+
+    if (!confirm(`Вы уверены, что хотите удалить отдел "${department.name}"?`)) return;
+    
+    try {
+      console.log('Deleting department:', department.id);
+      await hrApiService.deleteDepartment(department.id);
+      console.log('Department deleted successfully');
+      await loadDepartments();
+    } catch (err) {
+      console.error('Error deleting department:', err);
+      setError(err instanceof Error ? err.message : 'Ошибка удаления отдела');
+    }
+  };
+
+  const handleToggleStatus = async (department: Department) => {
+    const newStatus = department.status === 'active' ? 'inactive' : 'active';
+    
+    try {
+      await hrApiService.updateDepartment(department.id, { status: newStatus });
+      await loadDepartments();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Ошибка изменения статуса отдела');
+    }
+  };
+
   const toggleExpanded = (deptId: string) => {
     const newExpanded = new Set(expandedDepts);
     if (newExpanded.has(deptId)) {
@@ -74,6 +133,7 @@ const DepartmentsPage: React.FC = () => {
     const hasChildren = dept.children && dept.children.length > 0;
     const isExpanded = expandedDepts.has(dept.id);
     const paddingLeft = level * 24;
+    const totalWorkers = getTotalWorkers(dept);
 
     return (
       <div key={dept.id}>
@@ -117,9 +177,12 @@ const DepartmentsPage: React.FC = () => {
           </div>
 
           <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2 text-sm text-gray-600">
+            <div className="flex items-center space-x-1 text-sm text-gray-600 bg-gray-100 px-2 py-1 rounded">
               <Users className="h-4 w-4" />
               <span>{dept.workers?.length || 0}</span>
+              {totalWorkers !== (dept.workers?.length || 0) && (
+                <span className="text-xs text-gray-500">({totalWorkers} всего)</span>
+              )}
             </div>
             
             <span className={`px-2 py-1 rounded-full text-xs font-medium ${
@@ -130,11 +193,45 @@ const DepartmentsPage: React.FC = () => {
               {dept.status === 'active' ? 'Активный' : 'Неактивный'}
             </span>
 
-            <div className="flex items-center space-x-1">
-              <button className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
+            <div className="flex items-center space-x-1 flex-shrink-0">
+              <button 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setViewingDepartment(dept);
+                }}
+                className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                title="Просмотр деталей"
+              >
+                <Eye className="h-4 w-4" />
+              </button>
+              <button 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setEditingDepartment(dept);
+                }}
+                className="p-2 text-gray-600 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition-colors"
+                title="Редактировать"
+              >
                 <Edit className="h-4 w-4" />
               </button>
-              <button className="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+              <button 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleToggleStatus(dept);
+                }}
+                className="p-2 text-gray-600 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
+                title={dept.status === 'active' ? 'Деактивировать' : 'Активировать'}
+              >
+                <ToggleLeft className="h-4 w-4" />
+              </button>
+              <button 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDeleteDepartment(dept);
+                }}
+                className="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                title="Удалить отдел"
+              >
                 <Trash2 className="h-4 w-4" />
               </button>
             </div>
@@ -271,6 +368,28 @@ const DepartmentsPage: React.FC = () => {
           onClose={() => setShowCreateModal(false)}
           onSubmit={handleCreateDepartment}
           departments={departments}
+        />
+      )}
+
+      {/* Edit Department Modal */}
+      {editingDepartment && (
+        <EditDepartmentModal
+          department={editingDepartment}
+          onClose={() => setEditingDepartment(null)}
+          onSubmit={(data) => handleEditDepartment(editingDepartment.id, data)}
+          departments={departments}
+        />
+      )}
+
+      {/* Department Details Modal */}
+      {viewingDepartment && (
+        <DepartmentDetailsModal
+          department={viewingDepartment}
+          onClose={() => setViewingDepartment(null)}
+          onEdit={() => {
+            setEditingDepartment(viewingDepartment);
+            setViewingDepartment(null);
+          }}
         />
       )}
     </div>
