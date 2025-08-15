@@ -438,6 +438,14 @@ const StructuredCommentRenderer: React.FC<StructuredCommentRendererProps> = ({
             {section.type === 'database' && section.data.changes && renderDatabaseSection(section.data.changes)}
             {section.type === 'design' && section.data.elements && renderDesignSection(section.data.elements)}
             {section.type === 'quality' && section.data.metrics && renderQualitySection(section.data.metrics)}
+            
+            {/* Figma Embed for design sections */}
+            {section.type === 'design' && section.data.figmaUrl && (
+              <div className="mt-3">
+                <FigmaEmbed url={section.data.figmaUrl} title={section.title} compact={compact} />
+              </div>
+            )}
+            
             {section.type === 'notes' && section.data.text && (
               <div className="bg-white rounded p-2 border border-gray-200">
                 <p className="text-xs text-gray-700 whitespace-pre-wrap">{section.data.text}</p>
@@ -448,14 +456,14 @@ const StructuredCommentRenderer: React.FC<StructuredCommentRendererProps> = ({
                 <LinksList links={section.data.links} />
               </div>
             )}
+            
+            {/* Global Links for any section */}
+            {section.data.links && section.data.links.length > 0 && section.type !== 'notes' && (
+              <div className="mt-3">
+                <LinksList links={section.data.links} compact={compact} />
+              </div>
+            )}
           </div>
-          
-          {/* Global Links for section */}
-          {section.data.links && section.data.links.length > 0 && (
-            <div className="mt-3">
-              <LinksList links={section.data.links} compact={true} />
-            </div>
-          )}
         </div>
       ))}
     </div>
