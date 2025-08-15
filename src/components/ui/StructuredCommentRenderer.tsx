@@ -239,82 +239,109 @@ const StructuredCommentRenderer: React.FC<StructuredCommentRendererProps> = ({
   };
 
   const renderDesignSection = (elements: DesignElement[]) => {
-    const getBrowserIcon = (browser: string) => {
-      switch (browser) {
-        case 'chrome': return <Chrome className="h-3 w-3" />;
-        case 'firefox': return <Globe className="h-3 w-3" />;
-        case 'safari': return <Monitor className="h-3 w-3" />;
-        case 'edge': return <Globe className="h-3 w-3" />;
-        case 'mobile': return <Smartphone className="h-3 w-3" />;
-        default: return <Globe className="h-3 w-3" />;
-      }
+    const getBrowserData = (browser: string) => {
+      const data = {
+        chrome: { icon: <Chrome className="h-4 w-4" />, name: 'Chrome', color: 'from-blue-500 to-blue-600' },
+        firefox: { icon: <Globe className="h-4 w-4" />, name: 'Firefox', color: 'from-orange-500 to-red-500' },
+        safari: { icon: <Monitor className="h-4 w-4" />, name: 'Safari', color: 'from-gray-600 to-gray-700' },
+        edge: { icon: <Globe className="h-4 w-4" />, name: 'Edge', color: 'from-blue-600 to-indigo-600' },
+        mobile: { icon: <Smartphone className="h-4 w-4" />, name: 'Mobile', color: 'from-green-500 to-emerald-600' }
+      };
+      return data[browser] || { icon: <Globe className="h-4 w-4" />, name: browser, color: 'from-gray-500 to-gray-600' };
     };
 
-    const getSupportColor = (support: string) => {
-      switch (support) {
-        case 'supported': return 'text-emerald-700 bg-emerald-50';
-        case 'partial': return 'text-amber-700 bg-amber-50';
-        case 'unsupported': return 'text-red-700 bg-red-50';
-        default: return 'text-gray-700 bg-gray-50';
-      }
-    };
-
-    const getSupportEmoji = (support: string) => {
-      switch (support) {
-        case 'supported': return '✅';
-        case 'partial': return '⚠️';
-        case 'unsupported': return '❌';
-        default: return '❓';
-      }
+    const getSupportStatus = (support: string) => {
+      const statuses = {
+        supported: { 
+          emoji: '✅', 
+          text: 'Full', 
+          color: 'bg-gradient-to-r from-emerald-500 to-green-500 text-white',
+          ring: 'ring-emerald-200'
+        },
+        partial: { 
+          emoji: '⚠️', 
+          text: 'Partial', 
+          color: 'bg-gradient-to-r from-amber-500 to-orange-500 text-white',
+          ring: 'ring-amber-200'
+        },
+        unsupported: { 
+          emoji: '❌', 
+          text: 'None', 
+          color: 'bg-gradient-to-r from-red-500 to-pink-500 text-white',
+          ring: 'ring-red-200'
+        }
+      };
+      return statuses[support] || { emoji: '❓', text: 'Unknown', color: 'bg-gray-500 text-white', ring: 'ring-gray-200' };
     };
 
     return (
       <div className="space-y-2">
         {elements.map((element) => (
-          <div key={element.id} className="bg-white rounded-lg border border-gray-200 hover:border-gray-300 transition-colors">
-            <div className="p-3">
-              <div className="flex items-center justify-between mb-2">
+          <div key={element.id} className="bg-gradient-to-br from-white to-gray-50 rounded-xl border border-gray-200 hover:border-gray-300 hover:shadow-md transition-all duration-200">
+            <div className="p-4">
+              {/* Header */}
+              <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center space-x-2">
-                  <div className="w-6 h-6 bg-pink-500 rounded flex items-center justify-center">
-                    <Palette className="h-3 w-3 text-white" />
+                  <div className="w-8 h-8 bg-gradient-to-br from-pink-500 to-purple-600 rounded-lg flex items-center justify-center shadow-sm">
+                    <Palette className="h-4 w-4 text-white" />
                   </div>
                   <div>
-                    <h4 className="font-medium text-gray-900 text-sm">{element.name}</h4>
-                    <p className="text-xs text-gray-600 capitalize">{element.type}</p>
+                    <h4 className="font-semibold text-gray-900">{element.name}</h4>
+                    <p className="text-xs text-gray-500 capitalize flex items-center space-x-1">
+                      <span>{element.type}</span>
+                      {element.responsive && (
+                        <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs bg-blue-100 text-blue-700 font-medium">
+                          <Smartphone className="h-3 w-3 mr-1" />
+                          Responsive
+                        </span>
+                      )}
+                    </p>
                   </div>
                 </div>
-                <div className="flex items-center space-x-1">
-                  {element.responsive && (
-                    <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full font-medium">
-                      📱
-                    </span>
-                  )}
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                    element.status === 'implemented' ? 'bg-emerald-100 text-emerald-700' :
-                    element.status === 'approved' ? 'bg-blue-100 text-blue-700' :
-                    element.status === 'review' ? 'bg-amber-100 text-amber-700' :
-                    'bg-gray-100 text-gray-700'
-                  }`}>
+                <span className={`px-3 py-1.5 rounded-full text-xs font-semibold shadow-sm ${
+                  element.status === 'implemented' ? 'bg-gradient-to-r from-emerald-500 to-green-500 text-white' :
+                  element.status === 'approved' ? 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white' :
+                  element.status === 'review' ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white' :
+                  'bg-gradient-to-r from-gray-500 to-gray-600 text-white'
+                }`}>
                     {element.status}
-                  </span>
-                </div>
+                </span>
               </div>
               
-              <div className="bg-gray-50 rounded-lg p-2 border border-gray-200">
-                <h5 className="text-xs font-medium text-gray-700 mb-2 flex items-center space-x-1">
-                  <Globe className="h-3 w-3" />
-                  <span>Browser Support</span>
+              {/* Browser Support */}
+              <div className="bg-white rounded-lg p-3 border border-gray-100 shadow-sm">
+                <h5 className="text-sm font-semibold text-gray-800 mb-3 flex items-center space-x-2">
+                  <div className="w-5 h-5 bg-gradient-to-br from-blue-500 to-indigo-600 rounded flex items-center justify-center">
+                    <Globe className="h-3 w-3 text-white" />
+                  </div>
+                  <span>Browser Compatibility</span>
                 </h5>
-                <div className="grid grid-cols-5 gap-1">
-                  {Object.entries(element.browserSupport).map(([browser, support]) => (
-                    <div key={browser} className={`rounded p-1 text-center border ${getSupportColor(support)}`}>
-                      <div className="flex flex-col items-center space-y-1">
-                        {getBrowserIcon(browser)}
-                        <span className="text-xs font-medium capitalize">{browser}</span>
-                        <span className="text-sm">{getSupportEmoji(support)}</span>
+                <div className="grid grid-cols-5 gap-2">
+                  {Object.entries(element.browserSupport).map(([browser, support]) => {
+                    const browserData = getBrowserData(browser);
+                    const supportStatus = getSupportStatus(support);
+                    return (
+                      <div key={browser} className="bg-gradient-to-br from-gray-50 to-white rounded-lg p-2 border border-gray-200 hover:border-gray-300 transition-all duration-200 hover:shadow-sm">
+                        <div className="flex flex-col items-center space-y-2">
+                          {/* Browser Icon */}
+                          <div className={`w-8 h-8 bg-gradient-to-br ${browserData.color} rounded-lg flex items-center justify-center shadow-sm`}>
+                            {browserData.icon}
+                          </div>
+                          
+                          {/* Browser Name */}
+                          <span className="text-xs font-medium text-gray-700">{browserData.name}</span>
+                          
+                          {/* Support Status */}
+                          <div className="flex flex-col items-center space-y-1">
+                            <span className="text-lg">{supportStatus.emoji}</span>
+                            <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${supportStatus.color} shadow-sm`}>
+                              {supportStatus.text}
+                            </span>
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             </div>
@@ -326,49 +353,89 @@ const StructuredCommentRenderer: React.FC<StructuredCommentRendererProps> = ({
 
   const renderQualitySection = (metrics: QualityMetric[]) => {
     const getMetricIcon = (name: string) => {
-      if (name.toLowerCase().includes('speed') || name.toLowerCase().includes('performance')) {
-        return <Zap className="h-3 w-3" />;
+      if (name.toLowerCase().includes('speed') || name.toLowerCase().includes('performance') || name.toLowerCase().includes('загрузк')) {
+        return { icon: <Zap className="h-5 w-5" />, color: 'from-yellow-500 to-orange-500' };
       }
-      if (name.toLowerCase().includes('security')) {
-        return <Shield className="h-3 w-3" />;
+      if (name.toLowerCase().includes('security') || name.toLowerCase().includes('безопасн')) {
+        return { icon: <Shield className="h-5 w-5" />, color: 'from-blue-500 to-indigo-600' };
       }
-      if (name.toLowerCase().includes('accessibility')) {
-        return <Activity className="h-3 w-3" />;
+      if (name.toLowerCase().includes('accessibility') || name.toLowerCase().includes('доступн')) {
+        return { icon: <Activity className="h-5 w-5" />, color: 'from-purple-500 to-pink-500' };
       }
-      return <CheckCircle className="h-3 w-3" />;
+      if (name.toLowerCase().includes('seo')) {
+        return { icon: <TrendingUp className="h-5 w-5" />, color: 'from-green-500 to-emerald-500' };
+      }
+      return { icon: <CheckCircle className="h-5 w-5" />, color: 'from-gray-500 to-gray-600' };
     };
 
-    const getStatusColor = (status: string) => {
+    const getStatusStyle = (status: string) => {
       switch (status) {
-        case 'good': return 'bg-emerald-500 text-white';
-        case 'warning': return 'bg-amber-500 text-white';
-        case 'critical': return 'bg-red-500 text-white';
-        default: return 'bg-gray-500 text-white';
+        case 'good': return { 
+          bg: 'bg-gradient-to-br from-emerald-500 to-green-600', 
+          ring: 'ring-emerald-200',
+          glow: 'shadow-emerald-200'
+        };
+        case 'warning': return { 
+          bg: 'bg-gradient-to-br from-amber-500 to-orange-500', 
+          ring: 'ring-amber-200',
+          glow: 'shadow-amber-200'
+        };
+        case 'critical': return { 
+          bg: 'bg-gradient-to-br from-red-500 to-pink-500', 
+          ring: 'ring-red-200',
+          glow: 'shadow-red-200'
+        };
+        default: return { 
+          bg: 'bg-gradient-to-br from-gray-500 to-gray-600', 
+          ring: 'ring-gray-200',
+          glow: 'shadow-gray-200'
+        };
       }
     };
 
     return (
-      <div className="grid grid-cols-3 gap-2">
-        {metrics.map((metric) => (
-          <div key={metric.id} className="bg-white rounded-lg border border-gray-200 p-3 text-center">
-            <div>
-              <div className={`w-8 h-8 mx-auto mb-2 rounded ${getStatusColor(metric.status)} flex items-center justify-center`}>
-                {getMetricIcon(metric.name)}
+      <div className="grid grid-cols-3 gap-3">
+        {metrics.map((metric) => {
+          const iconData = getMetricIcon(metric.name);
+          const statusStyle = getStatusStyle(metric.status);
+          
+          return (
+            <div key={metric.id} className="bg-gradient-to-br from-white to-gray-50 rounded-xl border border-gray-200 p-4 text-center hover:shadow-lg hover:border-gray-300 transition-all duration-200">
+              {/* Icon */}
+              <div className="relative mb-3">
+                <div className={`w-12 h-12 mx-auto ${statusStyle.bg} rounded-xl flex items-center justify-center shadow-lg ${statusStyle.glow} ring-4 ${statusStyle.ring}`}>
+                  <div className={`w-10 h-10 bg-gradient-to-br ${iconData.color} rounded-lg flex items-center justify-center text-white`}>
+                    {iconData.icon}
+                  </div>
+                </div>
               </div>
-              <h4 className="font-medium text-gray-900 text-xs mb-1">{metric.name}</h4>
-              <div className="text-lg font-bold text-gray-800 mb-1">
-                {metric.value}{metric.unit}
+              
+              {/* Metric Name */}
+              <h4 className="font-semibold text-gray-900 text-sm mb-2 leading-tight">{metric.name}</h4>
+              
+              {/* Value */}
+              <div className="mb-3">
+                <div className="text-2xl font-bold text-gray-800 mb-1">
+                  {metric.value}{metric.unit}
+                </div>
+                <div className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${statusStyle.bg} text-white shadow-sm`}>
+                  {metric.status === 'good' ? '✅ Good' : 
+                   metric.status === 'warning' ? '⚠️ Warning' : 
+                   metric.status === 'critical' ? '🚨 Critical' : '❓ Unknown'}
+                </div>
               </div>
+              
+              {/* Benchmark */}
               {metric.benchmark && (
-                <div className="bg-gray-50 rounded p-1">
-                  <p className="text-xs text-gray-600">
-                    Target: {metric.benchmark}{metric.unit}
+                <div className="bg-white rounded-lg p-2 border border-gray-200 shadow-sm">
+                  <p className="text-xs text-gray-600 font-medium">
+                    🎯 Target: <span className="font-semibold text-gray-800">{metric.benchmark}{metric.unit}</span>
                   </p>
                 </div>
               )}
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     );
   };
