@@ -26,6 +26,8 @@ import AutomationEditor from '../automation/AutomationEditor';
 import TaskLinksView from '../tasks/TaskLinksView';
 import TaskTimelineView from '../tasks/TaskTimelineView';
 import MirrorBackModal from '../tasks/MirrorBackModal';
+import { isStructuredComment, deserializeComment } from '../../utils/structuredComment';
+import StructuredCommentRenderer from '../ui/StructuredCommentRenderer';
 
 interface KanbanBoardProps {
   board: Board;
@@ -707,52 +709,21 @@ const TaskDescriptionView: React.FC<{ task: Task }> = ({ task }) => {
     loadLatestUpdate();
   }, [task.id]);
 
-  const parseStructuredContent = (content: string) => {
-    if (!content.includes('**') && !content.includes('#') && !content.includes('🔌') && !content.includes('🗄️')) {
-      return { isStructured: false, content };
-    }
-
-    const sections: { type: string; title: string; content: string; icon: React.ReactNode }[] = [];
-    const lines = content.split('\n');
-    let currentSection: { type: string; title: string; content: string; icon: React.ReactNode } | null = null;
-
-    for (const line of lines) {
-      if (line.startsWith('# ') || line.startsWith('## ') || line.includes('**') && line.includes(':')) {
-        if (currentSection) {
-          sections.push(currentSection);
-        }
-        const title = line.replace(/^#+\s*/, '').replace(/\*\*/g, '').replace(/🔌|🗄️|🎨|⚠️|🚀|📊/g, '').trim();
-        let icon = <FileText className="h-4 w-4" />;
-        let type = 'default';
-
-        if (line.includes('📊') || title.includes('Статус')) {
-          icon = <CheckCircle className="h-4 w-4" />;
-          type = 'status';
-        } else if (line.includes('🔌') || title.includes('API')) {
-          icon = <Code className="h-4 w-4" />;
-          type = 'api';
-        } else if (line.includes('🗄️') || title.includes('База')) {
-          icon = <Database className="h-4 w-4" />;
-          type = 'database';
-        } else if (line.includes('🎨') || title.includes('Дизайн')) {
-          icon = <Palette className="h-4 w-4" />;
-          type = 'design';
-        } else if (line.includes('⚠️') || title.includes('Проблемы')) {
-          icon = <AlertTriangle className="h-4 w-4" />;
-          type = 'quality';
-        }
-
-        currentSection = { type, title, content: '', icon };
-      } else if (currentSection) {
-        currentSection.content += line + '\n';
+  const renderContent = (content: string) => {
+    // Проверяем, является ли это структурированным комментарием
+    if (isStructuredComment(content)) {
+      const structuredComment = deserializeComment(content);
+      if (structuredComment) {
+        return <StructuredCommentRenderer comment={structuredComment} compact={true} />;
       }
     }
-
-    if (currentSection) {
-      sections.push(currentSection);
-    }
-
-    return { isStructured: true, sections };
+    
+    // Обычный текст
+    return (
+      <div className="bg-gray-50 rounded-lg p-4">
+        <p className="text-gray-700 whitespace-pre-wrap">{content}</p>
+      </div>
+    );
   };
 
   if (loading) {
@@ -790,7 +761,6 @@ const TaskDescriptionView: React.FC<{ task: Task }> = ({ task }) => {
     );
   }
 
-  const parsed = parseStructuredContent(displayContent);
 
   return (
     <div className="mb-6">
@@ -799,38 +769,7 @@ const TaskDescriptionView: React.FC<{ task: Task }> = ({ task }) => {
         <span>Описание {latestUpdate ? '(последнее обновление)' : ''}</span>
       </h3>
       
-      {!parsed.isStructured ? (
-        <div className="bg-gray-50 rounded-lg p-4">
-          <p className="text-gray-700 whitespace-pre-wrap">{displayContent}</p>
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {parsed.sections?.map((section, index) => {
-            const getSectionColor = (type: string) => {
-              switch (type) {
-                case 'status': return 'from-green-50 to-emerald-100 border-green-300';
-                case 'api': return 'from-blue-50 to-indigo-100 border-blue-300';
-                case 'database': return 'from-purple-50 to-violet-100 border-purple-300';
-                case 'quality': return 'from-red-50 to-pink-100 border-red-300';
-                case 'design': return 'from-pink-50 to-rose-50 border-pink-200';
-                default: return 'from-gray-50 to-slate-100 border-gray-300';
-              }
-            };
-
-            return (
-              <div key={index} className={`bg-gradient-to-br ${getSectionColor(section.type)} rounded-xl p-4 border shadow-sm`}>
-                <div className="flex items-center space-x-2 mb-3">
-                  {section.icon}
-                  <h4 className="font-bold text-gray-900 text-sm">{section.title}</h4>
-                </div>
-                <div className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">
-                  {section.content.trim()}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
+      {renderContent(displayContent)}
     </div>
   );
 };
