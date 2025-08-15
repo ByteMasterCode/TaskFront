@@ -36,14 +36,14 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, labels, stages, onMove, onApp
     new Date(task.dueDate) <= new Date(Date.now() + 24 * 60 * 60 * 1000);
 
   return (
-    <div className={`bg-white rounded-xl shadow-sm border-l-4 ${getPriorityColor()} hover:shadow-lg transition-all duration-300 cursor-pointer group relative overflow-hidden backdrop-blur-sm border border-gray-100/50`}>
+    <div className={`bg-white rounded-xl shadow-sm border-l-4 ${getPriorityColor()} hover:shadow-lg transition-all duration-300 cursor-pointer group relative overflow-hidden backdrop-blur-sm border border-gray-100/50 w-full`}>
       {/* Subtle gradient overlay */}
       <div className="absolute inset-0 bg-gradient-to-br from-white/50 to-transparent pointer-events-none"></div>
       
-      <div className="p-4 relative z-10">
+      <div className="p-3 relative z-10 min-w-0">
         {/* Task Header */}
         <div className="flex items-start justify-between mb-2">
-          <h4 className="font-semibold text-gray-900 text-sm leading-tight flex-1 pr-2 line-clamp-2">
+          <h4 className="font-semibold text-gray-900 text-sm leading-tight flex-1 min-w-0 pr-2 break-words">
             {task.title}
           </h4>
           <button className="opacity-0 group-hover:opacity-100 p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-all duration-200">
@@ -53,18 +53,18 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, labels, stages, onMove, onApp
 
         {/* Description */}
         {task.description && (
-          <p className="text-gray-600 text-xs mb-3 line-clamp-2 leading-relaxed">
+          <p className="text-gray-600 text-xs mb-3 line-clamp-2 leading-relaxed break-words">
             {task.description}
           </p>
         )}
 
         {/* Labels */}
         {taskLabels.length > 0 && (
-          <div className="flex flex-wrap gap-1.5 mb-3">
+          <div className="flex flex-wrap gap-1 mb-3 overflow-hidden">
             {taskLabels.map((label: Label) => (
               <span
                 key={label.id}
-                className="px-2 py-1 rounded-full text-xs font-semibold shadow-sm"
+                className="px-2 py-1 rounded-full text-xs font-semibold shadow-sm truncate max-w-full"
                 style={{ 
                   backgroundColor: label.color + '20', 
                   color: label.color,
@@ -79,7 +79,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, labels, stages, onMove, onApp
 
         {/* Due Date */}
         {task.dueDate && (
-          <div className={`flex items-center space-x-1.5 mb-3 text-xs px-2 py-1 rounded-lg ${
+          <div className={`flex items-center space-x-1 mb-3 text-xs px-2 py-1 rounded-lg overflow-hidden ${
             isOverdue ? 'text-red-600' : isDueSoon ? 'text-orange-600' : 'text-gray-500'
           } ${
             isOverdue ? 'bg-red-50 border border-red-200' : 
@@ -91,7 +91,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, labels, stages, onMove, onApp
             ) : (
               <Calendar className="h-3 w-3" />
             )}
-            <span className={isOverdue ? 'font-medium' : ''}>
+            <span className={`${isOverdue ? 'font-medium' : ''} truncate`}>
               {new Date(task.dueDate).toLocaleDateString('ru-RU')}
             </span>
             {isOverdue && <span className="font-medium">(просрочено)</span>}
@@ -101,14 +101,14 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, labels, stages, onMove, onApp
 
         {/* Footer */}
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-1 flex-1 min-w-0">
             {/* Assignee */}
             {task.assignee ? (
-              <div className="flex items-center space-x-1.5">
+              <div className="flex items-center space-x-1 min-w-0">
                 <div className="w-6 h-6 bg-gradient-to-br from-blue-100 to-blue-200 rounded-full flex items-center justify-center shadow-sm">
                   <User className="h-3 w-3 text-blue-600" />
                 </div>
-                <span className="text-xs text-gray-700 truncate max-w-16 font-medium">
+                <span className="text-xs text-gray-700 truncate max-w-20 font-medium">
                   {task.assignee.name || task.assignee.phone}
                 </span>
               </div>
@@ -119,30 +119,30 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, labels, stages, onMove, onApp
             )}
 
             {/* Comments count (if available) */}
-            <div className="flex items-center space-x-1 text-gray-400 bg-gray-50 px-1.5 py-0.5 rounded">
+            <div className="flex items-center space-x-1 text-gray-400 bg-gray-50 px-1 py-0.5 rounded flex-shrink-0">
               <MessageSquare className="h-3 w-3" />
               <span className="text-xs font-medium">0</span>
             </div>
 
             {/* Attachments count (if available) */}
-            <div className="flex items-center space-x-1 text-gray-400 bg-gray-50 px-1.5 py-0.5 rounded">
+            <div className="flex items-center space-x-1 text-gray-400 bg-gray-50 px-1 py-0.5 rounded flex-shrink-0">
               <Paperclip className="h-3 w-3" />
               <span className="text-xs font-medium">0</span>
             </div>
           </div>
 
           {/* Created date */}
-          <div className="flex items-center space-x-1 text-gray-400 bg-gray-50 px-1.5 py-0.5 rounded">
+          <div className="flex items-center space-x-1 text-gray-400 bg-gray-50 px-1 py-0.5 rounded flex-shrink-0">
             <Clock className="h-3 w-3" />
-            <span className="text-xs font-medium">
+            <span className="text-xs font-medium whitespace-nowrap">
               {new Date(task.createdAt).toLocaleDateString('ru-RU')}
             </span>
           </div>
         </div>
 
         {/* Quick Actions */}
-        <div className="mt-3 pt-3 border-t border-gray-100 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-1 group-hover:translate-y-0">
-          <div className="flex items-center space-x-2">
+        <div className="mt-2 pt-2 border-t border-gray-100 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-1 group-hover:translate-y-0">
+          <div className="flex items-center space-x-1">
             {/* Move to Stage Dropdown */}
             <select
               onChange={(e) => {
@@ -151,7 +151,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, labels, stages, onMove, onApp
                 }
                 e.target.value = ''; // Reset selection
               }}
-              className="flex-1 text-xs bg-gradient-to-r from-gray-50 to-gray-100 border border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 font-medium"
+              className="flex-1 text-xs bg-gradient-to-r from-gray-50 to-gray-100 border border-gray-200 rounded-lg px-2 py-1 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 font-medium min-w-0"
               defaultValue=""
             >
               <option value="" disabled>Переместить в...</option>
@@ -168,7 +168,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, labels, stages, onMove, onApp
             {onApprove && stages.find(s => s.id === task.stageId)?.requiresApproval && (
               <button
                 onClick={() => onApprove(task.id)}
-                className="px-3 py-2 bg-gradient-to-r from-green-50 to-green-100 hover:from-green-100 hover:to-green-200 text-green-700 rounded-lg text-xs font-bold transition-all duration-200 shadow-sm hover:shadow-md"
+                className="px-2 py-1 bg-gradient-to-r from-green-50 to-green-100 hover:from-green-100 hover:to-green-200 text-green-700 rounded-lg text-xs font-bold transition-all duration-200 shadow-sm hover:shadow-md flex-shrink-0"
                 title="Подтвердить задачу"
               >
                 ✓

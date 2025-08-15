@@ -353,15 +353,15 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ board, project, onBack }) => 
               <div className="flex space-x-4 h-full min-w-max px-6 py-4">
                 {stages.map((s) => (
                     <div key={s.id} className="flex-shrink-0 w-80">
-                      <div className="bg-gradient-to-b from-gray-50 to-gray-100 rounded-xl h-full flex flex-col max-h-full shadow-sm border border-gray-200/50 backdrop-blur-sm">
+                      <div className="bg-gradient-to-b from-gray-50 to-gray-100 rounded-xl h-full flex flex-col shadow-sm border border-gray-200/50 backdrop-blur-sm overflow-hidden">
                         {/* Stage Header */}
-                        <div className="p-4 border-b border-gray-200/70 flex-shrink-0 bg-white/60 rounded-t-xl backdrop-blur-sm">
+                        <div className="p-4 border-b border-gray-200/70 flex-shrink-0 bg-white/60 rounded-t-xl backdrop-blur-sm overflow-hidden">
                           <div className="flex items-center justify-between mb-2">
                             <div className="flex items-center space-x-2">
                               <div className="w-3 h-3 rounded-full bg-gradient-to-r from-blue-500 to-purple-500" />
-                              <h3 className="font-bold text-gray-900 text-base truncate pr-2">{s.name}</h3>
+                              <h3 className="font-bold text-gray-900 text-base truncate flex-1 min-w-0">{s.name}</h3>
                             </div>
-                            <div className="flex items-center space-x-2">
+                            <div className="flex items-center space-x-1 flex-shrink-0">
                           <span className="bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-800 px-2 py-1 rounded-full text-xs font-bold shadow-sm">
                             {s.key}
                           </span>
@@ -389,7 +389,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ board, project, onBack }) => 
                           {s.department && (
                               <div className="flex items-center space-x-1 mt-2">
                                 <div className="w-2 h-2 rounded-full bg-orange-400" />
-                                <span className="text-xs text-gray-600 font-medium">{s.department}</span>
+                                <span className="text-xs text-gray-600 font-medium truncate">{s.department}</span>
                               </div>
                           )}
                         </div>
@@ -400,10 +400,10 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ board, project, onBack }) => 
                               <div
                                   ref={provided.innerRef}
                                   {...provided.droppableProps}
-                                  className={`flex-1 p-4 space-y-3 overflow-y-auto min-h-0 transition-all duration-200 ${
+                                  className={`flex-1 p-3 space-y-3 overflow-y-auto min-h-0 transition-all duration-200 ${
                                       snapshot.isDraggingOver ? 'bg-gradient-to-b from-blue-50 to-indigo-50' : ''
                                   }`}
-                                  style={{ minHeight: '200px', transition: 'background-color 0.2s ease' }}
+                                  style={{ minHeight: '200px', maxHeight: 'calc(100vh - 300px)', transition: 'background-color 0.2s ease' }}
                               >
                                 {getTasksByStage(s.id).map((task, index) => (
                                     <Draggable key={task.id} draggableId={task.id} index={index}>
@@ -450,10 +450,10 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ board, project, onBack }) => 
                 {/* Нераспределённые задачи (stageId больше не существует) */}
                 {orphanTasks.length > 0 && (
                     <div className="flex-shrink-0 w-80">
-                      <div className="bg-gradient-to-b from-yellow-50 to-yellow-100 rounded-xl h-full flex flex-col max-h-full shadow-sm border border-yellow-200/50">
-                        <div className="p-4 border-b border-yellow-200/70 bg-white/60 rounded-t-xl">
+                      <div className="bg-gradient-to-b from-yellow-50 to-yellow-100 rounded-xl h-full flex flex-col shadow-sm border border-yellow-200/50 overflow-hidden">
+                        <div className="p-4 border-b border-yellow-200/70 bg-white/60 rounded-t-xl overflow-hidden">
                           <div className="flex items-center justify-between">
-                            <h3 className="font-bold text-gray-900">Нераспределено</h3>
+                            <h3 className="font-bold text-gray-900 truncate flex-1 min-w-0">Нераспределено</h3>
                             <span className="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs font-bold shadow-sm">
                           {orphanTasks.length}
                         </span>
@@ -467,7 +467,8 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ board, project, onBack }) => 
                               <div
                                   ref={provided.innerRef}
                                   {...provided.droppableProps}
-                                  className="flex-1 p-4 space-y-3 overflow-y-auto min-h-0"
+                                  className="flex-1 p-3 space-y-3 overflow-y-auto min-h-0"
+                                  style={{ maxHeight: 'calc(100vh - 300px)' }}
                               >
                                 {orphanTasks.map((task, index) => (
                                     <Draggable key={task.id} draggableId={task.id} index={index}>
