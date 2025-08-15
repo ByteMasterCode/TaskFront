@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { X, Send, Database, Code, Palette, Bug, CheckCircle, AlertTriangle, Globe, Server, Smartphone, Monitor } from 'lucide-react';
+import { X, Send, Database, Code, Palette, Bug, CheckCircle, AlertTriangle, Globe, Server, Smartphone, Monitor, Plus, Trash2, Edit3 } from 'lucide-react';
 import { WorkflowStage, Task } from '../../types';
 import { apiService } from '../../services/api';
 
@@ -31,11 +31,11 @@ const MirrorBackModal: React.FC<MirrorBackModalProps> = ({
     const [commentTemplate, setCommentTemplate] = useState<string>('professional');
     
     // Professional fields
-    const [apiEndpoints, setApiEndpoints] = useState<string>('');
-    const [dbChanges, setDbChanges] = useState<string>('');
+    const [apiEndpoints, setApiEndpoints] = useState<{method: string, path: string, description: string}[]>([]);
+    const [dbChanges, setDbChanges] = useState<{type: string, description: string}[]>([]);
     const [designNotes, setDesignNotes] = useState<string>('');
     const [testResults, setTestResults] = useState<'passed' | 'failed' | 'partial' | ''>('');
-    const [issues, setIssues] = useState<string>('');
+    const [issues, setIssues] = useState<{severity: string, description: string}[]>([]);
     const [deploymentNotes, setDeploymentNotes] = useState<string>('');
     const [performanceNotes, setPerformanceNotes] = useState<string>('');
     const [securityNotes, setSecurityNotes] = useState<string>('');
@@ -74,6 +74,48 @@ const MirrorBackModal: React.FC<MirrorBackModalProps> = ({
         );
     };
 
+    const addApiEndpoint = () => {
+        setApiEndpoints(prev => [...prev, { method: 'GET', path: '/api/', description: '' }]);
+    };
+
+    const updateApiEndpoint = (index: number, field: string, value: string) => {
+        setApiEndpoints(prev => prev.map((item, i) => 
+            i === index ? { ...item, [field]: value } : item
+        ));
+    };
+
+    const removeApiEndpoint = (index: number) => {
+        setApiEndpoints(prev => prev.filter((_, i) => i !== index));
+    };
+
+    const addDbChange = () => {
+        setDbChanges(prev => [...prev, { type: 'CREATE', description: '' }]);
+    };
+
+    const updateDbChange = (index: number, field: string, value: string) => {
+        setDbChanges(prev => prev.map((item, i) => 
+            i === index ? { ...item, [field]: value } : item
+        ));
+    };
+
+    const removeDbChange = (index: number) => {
+        setDbChanges(prev => prev.filter((_, i) => i !== index));
+    };
+
+    const addIssue = () => {
+        setIssues(prev => [...prev, { severity: 'medium', description: '' }]);
+    };
+
+    const updateIssue = (index: number, field: string, value: string) => {
+        setIssues(prev => prev.map((item, i) => 
+            i === index ? { ...item, [field]: value } : item
+        ));
+    };
+
+    const removeIssue = (index: number) => {
+        setIssues(prev => prev.filter((_, i) => i !== index));
+    };
+
     const generateProfessionalComment = () => {
         if (commentTemplate === 'custom') return comment;
         
@@ -101,26 +143,28 @@ const MirrorBackModal: React.FC<MirrorBackModalProps> = ({
         }
         
         // Technical Implementation
-        if (apiEndpoints.trim() || dbChanges.trim()) {
+        if (apiEndpoints.length > 0 || dbChanges.length > 0) {
             report += `## 🔧 **Техническая реализация**\n\n`;
             
-            if (apiEndpoints.trim()) {
+            if (apiEndpoints.length > 0) {
                 report += `### 🔌 **API Endpoints**\n`;
-                apiEndpoints.split('\n').forEach(endpoint => {
-                    if (endpoint.trim()) {
-                        const [method, path] = endpoint.trim().split(' ');
-                        const methodColor = method === 'GET' ? '🟢' : method === 'POST' ? '🔵' : method === 'PUT' ? '🟡' : method === 'DELETE' ? '🔴' : '⚪';
-                        report += `${methodColor} \`${method}\` **${path}**\n`;
+                apiEndpoints.forEach(endpoint => {
+                    if (endpoint.path.trim()) {
+                        const methodColor = endpoint.method === 'GET' ? '🟢' : endpoint.method === 'POST' ? '🔵' : endpoint.method === 'PUT' ? '🟡' : endpoint.method === 'DELETE' ? '🔴' : '⚪';
+                        report += `${methodColor} \`${endpoint.method}\` **${endpoint.path}**`;
+                        if (endpoint.description) report += ` - ${endpoint.description}`;
+                        report += '\n';
                     }
                 });
                 report += '\n';
             }
             
-            if (dbChanges.trim()) {
+            if (dbChanges.length > 0) {
                 report += `### 🗄️ **База данных**\n`;
-                dbChanges.split('\n').forEach(change => {
-                    if (change.trim()) {
-                        report += `• ${change.trim()}\n`;
+                dbChanges.forEach(change => {
+                    if (change.description.trim()) {
+                        const typeIcon = change.type === 'CREATE' ? '🆕' : change.type === 'UPDATE' ? '🔄' : change.type === 'DELETE' ? '🗑️' : change.type === 'INDEX' ? '📊' : '🔧';
+                        report += `${typeIcon} **${change.type}**: ${change.description}\n`;
                     }
                 });
                 report += '\n';
@@ -209,11 +253,12 @@ const MirrorBackModal: React.FC<MirrorBackModalProps> = ({
         }
         
         // Issues & Recommendations
-        if (issues.trim()) {
+        if (issues.length > 0) {
             report += `## ⚠️ **Проблемы и рекомендации**\n`;
-            issues.split('\n').forEach(issue => {
-                if (issue.trim()) {
-                    report += `🔸 ${issue.trim()}\n`;
+            issues.forEach(issue => {
+                if (issue.description.trim()) {
+                    const severityIcon = issue.severity === 'high' ? '🔴' : issue.severity === 'medium' ? '🟡' : '🟢';
+                    report += `${severityIcon} **${issue.severity.toUpperCase()}**: ${issue.description}\n`;
                 }
             });
             report += '\n';
@@ -366,26 +411,134 @@ const MirrorBackModal: React.FC<MirrorBackModalProps> = ({
                                             <Code className="h-5 w-5 text-blue-600" />
                                             Техническая реализация
                                         </h3>
-                                        <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-6">
+                                            {/* API Endpoints */}
                                             <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-2">API Endpoints</label>
-                                                <textarea
-                                                    value={apiEndpoints}
-                                                    onChange={(e) => setApiEndpoints(e.target.value)}
-                                                    rows={4}
-                                                    placeholder="GET /api/users&#10;POST /api/tasks&#10;PUT /api/tasks/:id&#10;DELETE /api/tasks/:id"
-                                                    className="w-full border border-gray-200 rounded-lg px-3 py-2 font-mono text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                                />
+                                                <div className="flex items-center justify-between mb-3">
+                                                    <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                                                        <Globe className="h-4 w-4 text-blue-600" />
+                                                        API Endpoints
+                                                    </label>
+                                                    <button
+                                                        onClick={addApiEndpoint}
+                                                        className="px-3 py-1 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg text-sm font-medium flex items-center gap-1 transition-colors"
+                                                    >
+                                                        <Plus className="h-3 w-3" />
+                                                        Добавить
+                                                    </button>
+                                                </div>
+                                                <div className="space-y-3">
+                                                    {apiEndpoints.map((endpoint, index) => (
+                                                        <div key={index} className="bg-white rounded-lg border border-gray-200 p-3">
+                                                            <div className="grid grid-cols-12 gap-2 items-center">
+                                                                <div className="col-span-2">
+                                                                    <select
+                                                                        value={endpoint.method}
+                                                                        onChange={(e) => updateApiEndpoint(index, 'method', e.target.value)}
+                                                                        className="w-full text-xs font-mono font-bold rounded px-2 py-1 border border-gray-200 focus:ring-1 focus:ring-blue-500"
+                                                                    >
+                                                                        <option value="GET" className="text-green-600">GET</option>
+                                                                        <option value="POST" className="text-blue-600">POST</option>
+                                                                        <option value="PUT" className="text-yellow-600">PUT</option>
+                                                                        <option value="DELETE" className="text-red-600">DELETE</option>
+                                                                        <option value="PATCH" className="text-purple-600">PATCH</option>
+                                                                    </select>
+                                                                </div>
+                                                                <div className="col-span-4">
+                                                                    <input
+                                                                        type="text"
+                                                                        value={endpoint.path}
+                                                                        onChange={(e) => updateApiEndpoint(index, 'path', e.target.value)}
+                                                                        placeholder="/api/endpoint"
+                                                                        className="w-full text-xs font-mono rounded px-2 py-1 border border-gray-200 focus:ring-1 focus:ring-blue-500"
+                                                                    />
+                                                                </div>
+                                                                <div className="col-span-5">
+                                                                    <input
+                                                                        type="text"
+                                                                        value={endpoint.description}
+                                                                        onChange={(e) => updateApiEndpoint(index, 'description', e.target.value)}
+                                                                        placeholder="Описание endpoint"
+                                                                        className="w-full text-xs rounded px-2 py-1 border border-gray-200 focus:ring-1 focus:ring-blue-500"
+                                                                    />
+                                                                </div>
+                                                                <div className="col-span-1">
+                                                                    <button
+                                                                        onClick={() => removeApiEndpoint(index)}
+                                                                        className="p-1 text-red-500 hover:text-red-700 hover:bg-red-50 rounded transition-colors"
+                                                                    >
+                                                                        <Trash2 className="h-3 w-3" />
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                    {apiEndpoints.length === 0 && (
+                                                        <div className="text-center py-4 text-gray-500 text-sm">
+                                                            Нажмите "Добавить" чтобы добавить API endpoint
+                                                        </div>
+                                                    )}
+                                                </div>
                                             </div>
+
+                                            {/* Database Changes */}
                                             <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-2">База данных</label>
-                                                <textarea
-                                                    value={dbChanges}
-                                                    onChange={(e) => setDbChanges(e.target.value)}
-                                                    rows={4}
-                                                    placeholder="Добавлена таблица users&#10;Создан индекс на tasks.status&#10;Миграция 001_add_user_roles.sql"
-                                                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                                />
+                                                <div className="flex items-center justify-between mb-3">
+                                                    <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                                                        <Database className="h-4 w-4 text-indigo-600" />
+                                                        База данных
+                                                    </label>
+                                                    <button
+                                                        onClick={addDbChange}
+                                                        className="px-3 py-1 bg-indigo-100 hover:bg-indigo-200 text-indigo-700 rounded-lg text-sm font-medium flex items-center gap-1 transition-colors"
+                                                    >
+                                                        <Plus className="h-3 w-3" />
+                                                        Добавить
+                                                    </button>
+                                                </div>
+                                                <div className="space-y-3">
+                                                    {dbChanges.map((change, index) => (
+                                                        <div key={index} className="bg-white rounded-lg border border-gray-200 p-3">
+                                                            <div className="grid grid-cols-12 gap-2 items-center">
+                                                                <div className="col-span-3">
+                                                                    <select
+                                                                        value={change.type}
+                                                                        onChange={(e) => updateDbChange(index, 'type', e.target.value)}
+                                                                        className="w-full text-xs font-medium rounded px-2 py-1 border border-gray-200 focus:ring-1 focus:ring-indigo-500"
+                                                                    >
+                                                                        <option value="CREATE">🆕 CREATE</option>
+                                                                        <option value="UPDATE">🔄 UPDATE</option>
+                                                                        <option value="DELETE">🗑️ DELETE</option>
+                                                                        <option value="INDEX">📊 INDEX</option>
+                                                                        <option value="MIGRATION">🔧 MIGRATION</option>
+                                                                    </select>
+                                                                </div>
+                                                                <div className="col-span-8">
+                                                                    <input
+                                                                        type="text"
+                                                                        value={change.description}
+                                                                        onChange={(e) => updateDbChange(index, 'description', e.target.value)}
+                                                                        placeholder="Описание изменения в БД"
+                                                                        className="w-full text-xs rounded px-2 py-1 border border-gray-200 focus:ring-1 focus:ring-indigo-500"
+                                                                    />
+                                                                </div>
+                                                                <div className="col-span-1">
+                                                                    <button
+                                                                        onClick={() => removeDbChange(index)}
+                                                                        className="p-1 text-red-500 hover:text-red-700 hover:bg-red-50 rounded transition-colors"
+                                                                    >
+                                                                        <Trash2 className="h-3 w-3" />
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                    {dbChanges.length === 0 && (
+                                                        <div className="text-center py-4 text-gray-500 text-sm">
+                                                            Нажмите "Добавить" чтобы добавить изменение БД
+                                                        </div>
+                                                    )}
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -490,17 +643,60 @@ const MirrorBackModal: React.FC<MirrorBackModalProps> = ({
 
                                     {/* Issues */}
                                     <div className="bg-gradient-to-r from-red-50 to-pink-50 rounded-xl p-4 border border-red-200">
-                                        <label className="block text-sm font-semibold text-gray-800 mb-2 flex items-center gap-2">
-                                            <AlertTriangle className="h-5 w-5 text-red-600" />
-                                            Проблемы и рекомендации
-                                        </label>
-                                        <textarea
-                                            value={issues}
-                                            onChange={(e) => setIssues(e.target.value)}
-                                            rows={3}
-                                            placeholder="Медленная загрузка на слабых устройствах&#10;Требуется оптимизация запросов&#10;Рекомендуется дополнительное тестирование"
-                                            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500"
-                                        />
+                                        <div className="flex items-center justify-between mb-3">
+                                            <label className="text-sm font-semibold text-gray-800 flex items-center gap-2">
+                                                <AlertTriangle className="h-5 w-5 text-red-600" />
+                                                Проблемы и рекомендации
+                                            </label>
+                                            <button
+                                                onClick={addIssue}
+                                                className="px-3 py-1 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg text-sm font-medium flex items-center gap-1 transition-colors"
+                                            >
+                                                <Plus className="h-3 w-3" />
+                                                Добавить
+                                            </button>
+                                        </div>
+                                        <div className="space-y-3">
+                                            {issues.map((issue, index) => (
+                                                <div key={index} className="bg-white rounded-lg border border-gray-200 p-3">
+                                                    <div className="grid grid-cols-12 gap-2 items-center">
+                                                        <div className="col-span-2">
+                                                            <select
+                                                                value={issue.severity}
+                                                                onChange={(e) => updateIssue(index, 'severity', e.target.value)}
+                                                                className="w-full text-xs font-medium rounded px-2 py-1 border border-gray-200 focus:ring-1 focus:ring-red-500"
+                                                            >
+                                                                <option value="low">🟢 LOW</option>
+                                                                <option value="medium">🟡 MEDIUM</option>
+                                                                <option value="high">🔴 HIGH</option>
+                                                            </select>
+                                                        </div>
+                                                        <div className="col-span-9">
+                                                            <input
+                                                                type="text"
+                                                                value={issue.description}
+                                                                onChange={(e) => updateIssue(index, 'description', e.target.value)}
+                                                                placeholder="Описание проблемы или рекомендации"
+                                                                className="w-full text-xs rounded px-2 py-1 border border-gray-200 focus:ring-1 focus:ring-red-500"
+                                                            />
+                                                        </div>
+                                                        <div className="col-span-1">
+                                                            <button
+                                                                onClick={() => removeIssue(index)}
+                                                                className="p-1 text-red-500 hover:text-red-700 hover:bg-red-50 rounded transition-colors"
+                                                            >
+                                                                <Trash2 className="h-3 w-3" />
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                            {issues.length === 0 && (
+                                                <div className="text-center py-4 text-gray-500 text-sm">
+                                                    Нажмите "Добавить" чтобы добавить проблему
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
 
                                     {/* Additional Notes */}
