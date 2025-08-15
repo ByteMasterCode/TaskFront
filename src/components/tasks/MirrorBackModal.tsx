@@ -1,7 +1,18 @@
 import React, { useEffect, useState } from 'react';
-import { X, Send, Database, Code, Palette, Bug, CheckCircle, AlertTriangle, Globe, Server, Smartphone, Monitor, Plus, Trash2, Edit3 } from 'lucide-react';
+import { X, Send, Database, Code, Palette, Bug, CheckCircle, AlertTriangle, Globe, Server, Smartphone, Monitor, Plus, Trash2, Edit3, Type, Hash, Calendar, ToggleLeft, Key } from 'lucide-react';
 import { WorkflowStage, Task } from '../../types';
 import { apiService } from '../../services/api';
+import { 
+  StructuredComment, 
+  ApiEndpoint, 
+  DatabaseChange, 
+  DatabaseField,
+  DesignElement, 
+  QualityMetric,
+  createStructuredComment,
+  addSection,
+  serializeComment
+} from '../../utils/structuredComment';
 
 type CopyField = 'description' | 'assigneeId' | 'dueDate';
 
@@ -31,8 +42,10 @@ const MirrorBackModal: React.FC<MirrorBackModalProps> = ({
     const [commentTemplate, setCommentTemplate] = useState<string>('professional');
     
     // Professional fields
-    const [apiEndpoints, setApiEndpoints] = useState<{method: string, path: string, description: string}[]>([]);
-    const [dbChanges, setDbChanges] = useState<{type: string, description: string}[]>([]);
+    const [apiEndpoints, setApiEndpoints] = useState<ApiEndpoint[]>([]);
+    const [dbChanges, setDbChanges] = useState<DatabaseChange[]>([]);
+    const [designElements, setDesignElements] = useState<DesignElement[]>([]);
+    const [qualityMetrics, setQualityMetrics] = useState<QualityMetric[]>([]);
     const [designNotes, setDesignNotes] = useState<string>('');
     const [testResults, setTestResults] = useState<'passed' | 'failed' | 'partial' | ''>('');
     const [issues, setIssues] = useState<{severity: string, description: string}[]>([]);
@@ -45,6 +58,13 @@ const MirrorBackModal: React.FC<MirrorBackModalProps> = ({
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [err, setErr] = useState('');
+    const [structuredComment, setStructuredComment] = useState<StructuredComment>(
+      createStructuredComment('Current User') // В реальном приложении получить из контекста
+    );
+
+    // Structured report state
+    const [status, setStatus] = useState('completed');
+    const [additionalNotes, setAdditionalNotes] = useState('');
 
     useEffect(() => {
         (async () => {
@@ -75,31 +95,93 @@ const MirrorBackModal: React.FC<MirrorBackModalProps> = ({
     };
 
     const addApiEndpoint = () => {
-        setApiEndpoints(prev => [...prev, { method: 'GET', path: '/api/', description: '' }]);
+        const newEndpoint: ApiEndpoint = {
+            id: `api-${Date.now()}`,
+            method: 'GET',
+            path: '/api/',
+            description: '',
+            status: 'completed'
+        };
+        setApiEndpoints(prev => [...prev, newEndpoint]);
     };
 
-    const updateApiEndpoint = (index: number, field: string, value: string) => {
-        setApiEndpoints(prev => prev.map((item, i) => 
-            i === index ? { ...item, [field]: value } : item
+    const updateApiEndpoint = (id: string, field: string, value: string) => {
+        setApiEndpoints(prev => prev.map(endpoint => 
+            endpoint.id === id ? { ...endpoint, [field]: value } : endpoint
         ));
     };
 
-    const removeApiEndpoint = (index: number) => {
-        setApiEndpoints(prev => prev.filter((_, i) => i !== index));
+    const removeApiEndpoint = (id: string) => {
+        setApiEndpoints(prev => prev.filter(endpoint => endpoint.id !== id));
     };
 
     const addDbChange = () => {
-        setDbChanges(prev => [...prev, { type: 'CREATE', description: '' }]);
+        const newChange: DatabaseChange = {
+            id: `db-${Date.now()}`,
+            type: 'CREATE',
+            table: '',
+            description: '',
+            status: 'applied'
+        };
+        setDbChanges(prev => [...prev, newChange]);
     };
 
-    const updateDbChange = (index: number, field: string, value: string) => {
-        setDbChanges(prev => prev.map((item, i) => 
-            i === index ? { ...item, [field]: value } : item
+    const updateDbChange = (id: string, field: string, value: string) => {
+        setDbChanges(prev => prev.map(change => 
+            change.id === id ? { ...change, [field]: value } : change
         ));
     };
 
-    const removeDbChange = (index: number) => {
-        setDbChanges(prev => prev.filter((_, i) => i !== index));
+    const removeDbChange = (id: string) => {
+        setDbChanges(prev => prev.filter(change => change.id !== id));
+    };
+
+    const addDesignElement = () => {
+        const newElement: DesignElement = {
+            id: `design-${Date.now()}`,
+            type: 'component',
+            name: '',
+            status: 'implemented',
+            browserSupport: {
+                chrome: 'supported',
+                firefox: 'supported',
+                safari: 'supported',
+                edge: 'supported',
+                mobile: 'supported'
+            },
+            responsive: true
+        };
+        setDesignElements(prev => [...prev, newElement]);
+    };
+
+    const updateDesignElement = (id: string, field: string, value: any) => {
+        setDesignElements(prev => prev.map(element => 
+            element.id === id ? { ...element, [field]: value } : element
+        ));
+    };
+
+    const removeDesignElement = (id: string) => {
+        setDesignElements(prev => prev.filter(element => element.id !== id));
+    };
+
+    const addQualityMetric = () => {
+        const newMetric: QualityMetric = {
+            id: `quality-${Date.now()}`,
+            name: '',
+            value: '',
+            status: 'good'
+        };
+        setQualityMetrics(prev => [...prev, newMetric]);
+    };
+
+    const updateQualityMetric = (id: string, field: string, value: any) => {
+        setQualityMetrics(prev => prev.map(metric => 
+            metric.id === id ? { ...metric, [field]: value } : metric
+        ));
+    };
+
+    const removeQualityMetric = (id: string) => {
+        setQualityMetrics(prev => prev.filter(metric => metric.id !== id));
     };
 
     const addIssue = () => {
@@ -282,7 +364,69 @@ const MirrorBackModal: React.FC<MirrorBackModalProps> = ({
         try {
             setSaving(true);
             setErr('');
-            const finalComment = generateProfessionalComment();
+
+            let finalComment = '';
+            
+            if (commentTemplate === 'professional') {
+                // Create structured comment
+                let comment = structuredComment;
+                
+                // Add status section
+                comment = addSection(comment, {
+                    type: 'status',
+                    title: 'Статус выполнения',
+                    data: { status }
+                });
+                
+                // Add API section
+                if (apiEndpoints.length > 0) {
+                    comment = addSection(comment, {
+                        type: 'api',
+                        title: 'API Endpoints',
+                        data: { endpoints: apiEndpoints }
+                    });
+                }
+                
+                // Add database section
+                if (dbChanges.length > 0) {
+                    comment = addSection(comment, {
+                        type: 'database',
+                        title: 'Database Changes',
+                        data: { changes: dbChanges }
+                    });
+                }
+                
+                // Add design section
+                if (designElements.length > 0) {
+                    comment = addSection(comment, {
+                        type: 'design',
+                        title: 'Design & UI/UX',
+                        data: { elements: designElements }
+                    });
+                }
+                
+                // Add quality section
+                if (qualityMetrics.length > 0) {
+                    comment = addSection(comment, {
+                        type: 'quality',
+                        title: 'Quality Metrics',
+                        data: { metrics: qualityMetrics }
+                    });
+                }
+                
+                // Add notes section
+                if (additionalNotes.trim()) {
+                    comment = addSection(comment, {
+                        type: 'notes',
+                        title: 'Additional Notes',
+                        data: { text: additionalNotes }
+                    });
+                }
+                
+                finalComment = serializeComment(comment);
+            } else {
+                finalComment = generateProfessionalComment();
+            }
             await apiService.mirrorBackTask(linkedTask.id, {
                 moveToStageKey,
                 comment: finalComment,
@@ -428,13 +572,13 @@ const MirrorBackModal: React.FC<MirrorBackModalProps> = ({
                                                     </button>
                                                 </div>
                                                 <div className="space-y-3">
-                                                    {apiEndpoints.map((endpoint, index) => (
-                                                        <div key={index} className="bg-white rounded-lg border border-gray-200 p-3">
+                                                    {apiEndpoints.map((endpoint) => (
+                                                        <div key={endpoint.id} className="bg-white rounded-lg border border-gray-200 p-3">
                                                             <div className="grid grid-cols-12 gap-2 items-center">
                                                                 <div className="col-span-2">
                                                                     <select
                                                                         value={endpoint.method}
-                                                                        onChange={(e) => updateApiEndpoint(index, 'method', e.target.value)}
+                                                                        onChange={(e) => updateApiEndpoint(endpoint.id, 'method', e.target.value)}
                                                                         className="w-full text-xs font-mono font-bold rounded px-2 py-1 border border-gray-200 focus:ring-1 focus:ring-blue-500"
                                                                     >
                                                                         <option value="GET" className="text-green-600">GET</option>
@@ -448,7 +592,7 @@ const MirrorBackModal: React.FC<MirrorBackModalProps> = ({
                                                                     <input
                                                                         type="text"
                                                                         value={endpoint.path}
-                                                                        onChange={(e) => updateApiEndpoint(index, 'path', e.target.value)}
+                                                                        onChange={(e) => updateApiEndpoint(endpoint.id, 'path', e.target.value)}
                                                                         placeholder="/api/endpoint"
                                                                         className="w-full text-xs font-mono rounded px-2 py-1 border border-gray-200 focus:ring-1 focus:ring-blue-500"
                                                                     />
@@ -457,18 +601,47 @@ const MirrorBackModal: React.FC<MirrorBackModalProps> = ({
                                                                     <input
                                                                         type="text"
                                                                         value={endpoint.description}
-                                                                        onChange={(e) => updateApiEndpoint(index, 'description', e.target.value)}
+                                                                        onChange={(e) => updateApiEndpoint(endpoint.id, 'description', e.target.value)}
                                                                         placeholder="Описание endpoint"
                                                                         className="w-full text-xs rounded px-2 py-1 border border-gray-200 focus:ring-1 focus:ring-blue-500"
                                                                     />
                                                                 </div>
                                                                 <div className="col-span-1">
                                                                     <button
-                                                                        onClick={() => removeApiEndpoint(index)}
+                                                                        onClick={() => removeApiEndpoint(endpoint.id)}
                                                                         className="p-1 text-red-500 hover:text-red-700 hover:bg-red-50 rounded transition-colors"
                                                                     >
                                                                         <Trash2 className="h-3 w-3" />
                                                                     </button>
+                                                                </div>
+                                                            </div>
+                                                            
+                                                            <div className="mt-3 grid grid-cols-2 gap-3">
+                                                                <select
+                                                                    value={endpoint.status}
+                                                                    onChange={(e) => updateApiEndpoint(endpoint.id, 'status', e.target.value)}
+                                                                    className="px-3 py-1.5 border border-gray-200 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                                                >
+                                                                    <option value="implemented">Implemented</option>
+                                                                    <option value="testing">Testing</option>
+                                                                    <option value="completed">Completed</option>
+                                                                    <option value="failed">Failed</option>
+                                                                </select>
+                                                                <div className="flex items-center space-x-2">
+                                                                    <input
+                                                                        type="number"
+                                                                        value={endpoint.responseTime || ''}
+                                                                        onChange={(e) => updateApiEndpoint(endpoint.id, 'responseTime', e.target.value)}
+                                                                        placeholder="Response time (ms)"
+                                                                        className="flex-1 px-3 py-1.5 border border-gray-200 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                                                    />
+                                                                    <input
+                                                                        type="number"
+                                                                        value={endpoint.statusCode || ''}
+                                                                        onChange={(e) => updateApiEndpoint(endpoint.id, 'statusCode', e.target.value)}
+                                                                        placeholder="Status code"
+                                                                        className="w-20 px-3 py-1.5 border border-gray-200 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                                                    />
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -497,13 +670,13 @@ const MirrorBackModal: React.FC<MirrorBackModalProps> = ({
                                                     </button>
                                                 </div>
                                                 <div className="space-y-3">
-                                                    {dbChanges.map((change, index) => (
-                                                        <div key={index} className="bg-white rounded-lg border border-gray-200 p-3">
+                                                    {dbChanges.map((change) => (
+                                                        <div key={change.id} className="bg-white rounded-lg border border-gray-200 p-3">
                                                             <div className="grid grid-cols-12 gap-2 items-center">
-                                                                <div className="col-span-3">
+                                                                <div className="col-span-2">
                                                                     <select
                                                                         value={change.type}
-                                                                        onChange={(e) => updateDbChange(index, 'type', e.target.value)}
+                                                                        onChange={(e) => updateDbChange(change.id, 'type', e.target.value)}
                                                                         className="w-full text-xs font-medium rounded px-2 py-1 border border-gray-200 focus:ring-1 focus:ring-indigo-500"
                                                                     >
                                                                         <option value="CREATE">🆕 CREATE</option>
@@ -513,23 +686,44 @@ const MirrorBackModal: React.FC<MirrorBackModalProps> = ({
                                                                         <option value="MIGRATION">🔧 MIGRATION</option>
                                                                     </select>
                                                                 </div>
-                                                                <div className="col-span-8">
+                                                                <div className="col-span-3">
+                                                                    <input
+                                                                        type="text"
+                                                                        value={change.table}
+                                                                        onChange={(e) => updateDbChange(change.id, 'table', e.target.value)}
+                                                                        placeholder="Table name"
+                                                                        className="w-full px-3 py-1.5 border border-gray-200 rounded text-sm font-mono focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                                                                    />
+                                                                </div>
+                                                                <div className="col-span-6">
                                                                     <input
                                                                         type="text"
                                                                         value={change.description}
-                                                                        onChange={(e) => updateDbChange(index, 'description', e.target.value)}
+                                                                        onChange={(e) => updateDbChange(change.id, 'description', e.target.value)}
                                                                         placeholder="Описание изменения в БД"
                                                                         className="w-full text-xs rounded px-2 py-1 border border-gray-200 focus:ring-1 focus:ring-indigo-500"
                                                                     />
                                                                 </div>
                                                                 <div className="col-span-1">
                                                                     <button
-                                                                        onClick={() => removeDbChange(index)}
+                                                                        onClick={() => removeDbChange(change.id)}
                                                                         className="p-1 text-red-500 hover:text-red-700 hover:bg-red-50 rounded transition-colors"
                                                                     >
                                                                         <Trash2 className="h-3 w-3" />
                                                                     </button>
                                                                 </div>
+                                                            </div>
+                                                            
+                                                            <div className="mt-3">
+                                                                <select
+                                                                    value={change.status}
+                                                                    onChange={(e) => updateDbChange(change.id, 'status', e.target.value)}
+                                                                    className="px-3 py-1.5 border border-gray-200 rounded text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                                                                >
+                                                                    <option value="pending">Pending</option>
+                                                                    <option value="applied">Applied</option>
+                                                                    <option value="failed">Failed</option>
+                                                                </select>
                                                             </div>
                                                         </div>
                                                     ))}
@@ -623,6 +817,179 @@ const MirrorBackModal: React.FC<MirrorBackModalProps> = ({
                                                     </select>
                                                 </div>
                                             </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Design & UI/UX */}
+                                    <div className="bg-gradient-to-br from-pink-50 to-rose-100 rounded-xl p-4 border border-pink-300">
+                                        <div className="flex items-center justify-between mb-3">
+                                            <div className="flex items-center space-x-2">
+                                                <Palette className="h-4 w-4 text-pink-600" />
+                                                <h4 className="font-semibold text-gray-900">Design & UI/UX</h4>
+                                            </div>
+                                            <button
+                                                onClick={addDesignElement}
+                                                className="px-3 py-1.5 bg-pink-600 hover:bg-pink-700 text-white rounded-lg text-sm font-medium flex items-center space-x-1 transition-colors"
+                                            >
+                                                <Plus className="h-4 w-4" />
+                                                <span>Добавить</span>
+                                            </button>
+                                        </div>
+
+                                        <div className="space-y-4">
+                                            {designElements.map((element) => (
+                                                <div key={element.id} className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
+                                                    <div className="grid grid-cols-12 gap-3 items-center">
+                                                        <div className="col-span-2">
+                                                            <select
+                                                                value={element.type}
+                                                                onChange={(e) => updateDesignElement(element.id, 'type', e.target.value)}
+                                                                className="w-full px-2 py-1.5 border border-gray-200 rounded text-xs focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                                                            >
+                                                                <option value="component">Component</option>
+                                                                <option value="page">Page</option>
+                                                                <option value="style">Style</option>
+                                                                <option value="animation">Animation</option>
+                                                            </select>
+                                                        </div>
+                                                        <div className="col-span-4">
+                                                            <input
+                                                                type="text"
+                                                                value={element.name}
+                                                                onChange={(e) => updateDesignElement(element.id, 'name', e.target.value)}
+                                                                placeholder="Element name"
+                                                                className="w-full px-3 py-1.5 border border-gray-200 rounded text-sm focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                                                            />
+                                                        </div>
+                                                        <div className="col-span-2">
+                                                            <select
+                                                                value={element.status}
+                                                                onChange={(e) => updateDesignElement(element.id, 'status', e.target.value)}
+                                                                className="w-full px-2 py-1.5 border border-gray-200 rounded text-xs focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                                                            >
+                                                                <option value="draft">Draft</option>
+                                                                <option value="review">Review</option>
+                                                                <option value="approved">Approved</option>
+                                                                <option value="implemented">Implemented</option>
+                                                            </select>
+                                                        </div>
+                                                        <div className="col-span-3">
+                                                            <label className="flex items-center space-x-2">
+                                                                <input
+                                                                    type="checkbox"
+                                                                    checked={element.responsive}
+                                                                    onChange={(e) => updateDesignElement(element.id, 'responsive', e.target.checked)}
+                                                                    className="rounded border-gray-300 text-pink-600 focus:ring-pink-500"
+                                                                />
+                                                                <span className="text-sm text-gray-700">Responsive</span>
+                                                            </label>
+                                                        </div>
+                                                        <div className="col-span-1">
+                                                            <button
+                                                                onClick={() => removeDesignElement(element.id)}
+                                                                className="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 rounded transition-colors"
+                                                            >
+                                                                <Trash2 className="h-4 w-4" />
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                            
+                                            {designElements.length === 0 && (
+                                                <div className="text-center py-6 text-gray-500">
+                                                    <Palette className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                                                    <p className="text-sm">No design elements added</p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {/* Quality Metrics */}
+                                    <div className="bg-gradient-to-br from-green-50 to-emerald-100 rounded-xl p-4 border border-green-300">
+                                        <div className="flex items-center justify-between mb-3">
+                                            <div className="flex items-center space-x-2">
+                                                <CheckCircle className="h-4 w-4 text-green-600" />
+                                                <h4 className="font-semibold text-gray-900">Quality Metrics</h4>
+                                            </div>
+                                            <button
+                                                onClick={addQualityMetric}
+                                                className="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium flex items-center space-x-1 transition-colors"
+                                            >
+                                                <Plus className="h-4 w-4" />
+                                                <span>Добавить</span>
+                                            </button>
+                                        </div>
+
+                                        <div className="space-y-4">
+                                            {qualityMetrics.map((metric) => (
+                                                <div key={metric.id} className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
+                                                    <div className="grid grid-cols-12 gap-3 items-center">
+                                                        <div className="col-span-3">
+                                                            <input
+                                                                type="text"
+                                                                value={metric.name}
+                                                                onChange={(e) => updateQualityMetric(metric.id, 'name', e.target.value)}
+                                                                placeholder="Metric name"
+                                                                className="w-full px-3 py-1.5 border border-gray-200 rounded text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                                                            />
+                                                        </div>
+                                                        <div className="col-span-2">
+                                                            <input
+                                                                type="text"
+                                                                value={metric.value}
+                                                                onChange={(e) => updateQualityMetric(metric.id, 'value', e.target.value)}
+                                                                placeholder="Value"
+                                                                className="w-full px-3 py-1.5 border border-gray-200 rounded text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                                                            />
+                                                        </div>
+                                                        <div className="col-span-2">
+                                                            <input
+                                                                type="text"
+                                                                value={metric.unit || ''}
+                                                                onChange={(e) => updateQualityMetric(metric.id, 'unit', e.target.value)}
+                                                                placeholder="Unit"
+                                                                className="w-full px-3 py-1.5 border border-gray-200 rounded text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                                                            />
+                                                        </div>
+                                                        <div className="col-span-2">
+                                                            <select
+                                                                value={metric.status}
+                                                                onChange={(e) => updateQualityMetric(metric.id, 'status', e.target.value)}
+                                                                className="w-full px-2 py-1.5 border border-gray-200 rounded text-xs focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                                                            >
+                                                                <option value="good">Good</option>
+                                                                <option value="warning">Warning</option>
+                                                                <option value="critical">Critical</option>
+                                                            </select>
+                                                        </div>
+                                                        <div className="col-span-2">
+                                                            <input
+                                                                type="text"
+                                                                value={metric.benchmark || ''}
+                                                                onChange={(e) => updateQualityMetric(metric.id, 'benchmark', e.target.value)}
+                                                                placeholder="Benchmark"
+                                                                className="w-full px-3 py-1.5 border border-gray-200 rounded text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                                                            />
+                                                        </div>
+                                                        <div className="col-span-1">
+                                                            <button
+                                                                onClick={() => removeQualityMetric(metric.id)}
+                                                                className="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 rounded transition-colors"
+                                                            >
+                                                                <Trash2 className="h-4 w-4" />
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                            
+                                            {qualityMetrics.length === 0 && (
+                                                <div className="text-center py-6 text-gray-500">
+                                                    <CheckCircle className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                                                    <p className="text-sm">No quality metrics added</p>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
 

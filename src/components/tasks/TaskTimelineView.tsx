@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Clock, User, ArrowRight, MessageSquare, Tag, UserPlus, UserMinus, CheckCircle, GitBranch, AlertTriangle, Code, Database, Palette, Server, Globe, Smartphone, Monitor, Chrome, Siren as Firefox, Badge as Edge, Variable as Safari, Zap, Shield, Activity, FileText, Settings, Download, Plus, X } from 'lucide-react';
+import { Clock, User, ArrowRight, MessageSquare, Tag, UserPlus, UserMinus, CheckCircle, GitBranch, AlertTriangle, Code, Database, Palette, Server, Globe, Smartphone, Monitor, Chrome, Zap, Shield, Activity, FileText, Settings, Download, Plus, X } from 'lucide-react';
 import { Task, TaskTransition } from '../../types';
 import { apiService } from '../../services/api';
+import { isStructuredComment, deserializeComment } from '../../utils/structuredComment';
+import StructuredCommentRenderer from '../ui/StructuredCommentRenderer';
 
 interface TaskTimelineViewProps {
   task: Task;
@@ -184,6 +186,15 @@ const TaskTimelineView: React.FC<TaskTimelineViewProps> = ({ task }) => {
   };
 
   const renderStructuredComment = (comment: string) => {
+    // Check if it's a structured comment
+    if (isStructuredComment(comment)) {
+      const structuredComment = deserializeComment(comment);
+      if (structuredComment) {
+        return <StructuredCommentRenderer comment={structuredComment} />;
+      }
+    }
+    
+    // Legacy parsing for old format
     const parsed = parseStructuredComment(comment);
     
     if (!parsed.isStructured) {
