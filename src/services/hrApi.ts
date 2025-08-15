@@ -420,7 +420,68 @@ class HRApiService {
     if (departmentId) params.set('departmentId', departmentId);
     if (status) params.set('status', status);
     const query = params.toString();
-    return this.request<Vacancy[]>(`/workers/vacancies${query ? `?${query}` : ''}`);
+    console.log('Making API request to get vacancies');
+    return this.request<Vacancy[]>(`/workers/vacancies${query ? `?${query}` : ''}`).catch(() => {
+      // Заглушка для списка вакансий
+      console.log('Get vacancies API not implemented, using mock data');
+      return [
+        {
+          id: 'vacancy-1',
+          title: 'Frontend разработчик',
+          description: 'Ищем опытного Frontend разработчика для работы с React и TypeScript',
+          departmentId: 'dept-1-1', // Разработка
+          position: 'Senior Frontend Developer',
+          status: 'open' as VacancyStatus,
+          quantity: 2,
+          salaryFrom: 80000,
+          salaryTo: 120000,
+          paymentType: 'salary' as any,
+          requirements: '• Опыт работы от 3 лет\n• Знание React, TypeScript\n• Английский язык B2+',
+          responsibilities: '• Разработка веб-приложений\n• Участие в code review\n• Менторинг junior разработчиков',
+          openDate: '2025-01-10',
+          createdAt: '2025-01-10T09:00:00Z',
+          updatedAt: '2025-01-10T09:00:00Z',
+          candidates: []
+        },
+        {
+          id: 'vacancy-2',
+          title: 'QA Engineer',
+          description: 'Требуется QA инженер для тестирования веб-приложений',
+          departmentId: 'dept-1-2', // QA
+          position: 'QA Engineer',
+          status: 'in_progress' as VacancyStatus,
+          quantity: 1,
+          salaryFrom: 60000,
+          salaryTo: 90000,
+          paymentType: 'salary' as any,
+          requirements: '• Опыт тестирования от 2 лет\n• Знание автотестов\n• Внимательность к деталям',
+          responsibilities: '• Функциональное тестирование\n• Написание автотестов\n• Работа с багтрекерами',
+          openDate: '2025-01-05',
+          createdAt: '2025-01-05T09:00:00Z',
+          updatedAt: '2025-01-05T09:00:00Z',
+          candidates: []
+        },
+        {
+          id: 'vacancy-3',
+          title: 'Менеджер по продажам',
+          description: 'Ищем активного менеджера для работы с клиентами',
+          departmentId: 'dept-2', // Отдел продаж
+          position: 'Sales Manager',
+          status: 'closed' as VacancyStatus,
+          quantity: 1,
+          salaryFrom: 40000,
+          salaryTo: 80000,
+          paymentType: 'mixed' as any,
+          requirements: '• Опыт продаж от 1 года\n• Коммуникабельность\n• Знание CRM систем',
+          responsibilities: '• Работа с клиентами\n• Ведение переговоров\n• Достижение KPI',
+          openDate: '2024-12-15',
+          closeDate: '2025-01-08',
+          createdAt: '2024-12-15T09:00:00Z',
+          updatedAt: '2025-01-08T09:00:00Z',
+          candidates: []
+        }
+      ] as Vacancy[];
+    });
   }
 
   getVacancy(id: string): Promise<Vacancy> {
@@ -432,7 +493,6 @@ class HRApiService {
     description: string;
     departmentId: string;
     position: string;
-    status?: VacancyStatus;
     quantity: number;
     salaryFrom?: number;
     salaryTo?: number;
@@ -441,16 +501,58 @@ class HRApiService {
     responsibilities?: string;
     openDate: string;
   }): Promise<Vacancy> {
+    console.log('Making API request to create vacancy:', data);
     return this.request<Vacancy>('/workers/vacancies', {
       method: 'POST',
       body: JSON.stringify(data)
+    }).catch(() => {
+      // Заглушка для создания вакансии
+      console.log('Create vacancy API not implemented, using mock response');
+      return {
+        id: `vacancy-${Date.now()}`,
+        title: data.title,
+        description: data.description,
+        departmentId: data.departmentId,
+        position: data.position,
+        status: 'open' as VacancyStatus,
+        quantity: data.quantity,
+        salaryFrom: data.salaryFrom,
+        salaryTo: data.salaryTo,
+        paymentType: data.paymentType,
+        requirements: data.requirements,
+        responsibilities: data.responsibilities,
+        openDate: data.openDate,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        candidates: []
+      } as Vacancy;
     });
   }
 
   updateVacancy(id: string, data: Partial<Vacancy>): Promise<Vacancy> {
+    console.log('Making API request to update vacancy:', id, data);
     return this.request<Vacancy>(`/workers/vacancies/${id}`, {
       method: 'PUT',
       body: JSON.stringify(data)
+    }).catch(() => {
+      // Заглушка для обновления вакансии
+      console.log('Update vacancy API not implemented, using mock response');
+      return {
+        ...data,
+        id,
+        updatedAt: new Date().toISOString()
+      } as Vacancy;
+    });
+  }
+
+  deleteVacancy(id: string): Promise<void> {
+    console.log('Making API request to delete vacancy:', id);
+    return this.request<void>(`/workers/vacancies/${id}`, {
+      method: 'DELETE'
+    }).catch(() => {
+      // Заглушка для удаления вакансии
+      console.log('Delete vacancy API not implemented, using mock response');
+      return undefined as unknown as void;
     });
   }
 

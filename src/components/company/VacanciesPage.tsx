@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { Vacancy, Department, VacancyStatus } from '../../types';
 import { hrApiService } from '../../services/hrApi';
+import CreateVacancyModal from './CreateVacancyModal';
 
 const VacanciesPage: React.FC = () => {
   const [vacancies, setVacancies] = useState<Vacancy[]>([]);
@@ -24,6 +25,7 @@ const VacanciesPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterDepartment, setFilterDepartment] = useState<string>('');
   const [filterStatus, setFilterStatus] = useState<VacancyStatus | ''>('');
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -47,6 +49,38 @@ const VacanciesPage: React.FC = () => {
     }
   };
 
+  const handleCreateVacancy = async (data: {
+    title: string;
+    description: string;
+    departmentId: string;
+    position: string;
+    quantity: number;
+    salaryFrom?: number;
+    salaryTo?: number;
+    paymentType: any;
+    requirements?: string;
+    responsibilities?: string;
+    openDate: string;
+  }) => {
+    try {
+      const newVacancy = await hrApiService.createVacancy(data);
+      setVacancies(prev => [newVacancy, ...prev]);
+      setShowCreateModal(false);
+    } catch (err) {
+      throw err;
+    }
+  };
+
+  const handleDeleteVacancy = async (vacancyId: string) => {
+    if (!confirm('Вы уверены, что хотите удалить эту вакансию?')) return;
+    
+    try {
+      await hrApiService.deleteVacancy(vacancyId);
+      setVacancies(prev => prev.filter(v => v.id !== vacancyId));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Ошибка удаления вакансии');
+    }
+  };
   const getStatusColor = (status: VacancyStatus) => {
     switch (status) {
       case 'open': return 'bg-green-100 text-green-800 border-green-200';
@@ -187,6 +221,13 @@ const VacanciesPage: React.FC = () => {
               <Plus className="h-5 w-5" />
               <span>Создать вакансию</span>
             </button>
+            <button 
+              onClick={() => setShowCreateModal(true)}
+              className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-xl font-medium flex items-center space-x-2 shadow-lg hover:shadow-xl transition-all duration-200"
+            >
+              <Plus className="h-5 w-5" />
+              <span>Создать вакансию</span>
+            </button>
           </div>
         </div>
       </div>
@@ -284,6 +325,12 @@ const VacanciesPage: React.FC = () => {
                 <button className="bg-red-50 hover:bg-red-100 text-red-700 p-2 rounded-lg transition-colors">
                   <Trash2 className="w-4 h-4" />
                 </button>
+                <button 
+                  onClick={() => handleDeleteVacancy(vacancy.id)}
+                  className="bg-red-50 hover:bg-red-100 text-red-700 p-2 rounded-lg transition-colors"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
               </div>
             </div>
           </div>
@@ -301,8 +348,23 @@ const VacanciesPage: React.FC = () => {
             <button className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-xl font-medium">
               Создать вакансию
             </button>
+            <button 
+              onClick={() => setShowCreateModal(true)}
+              className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-xl font-medium"
+            >
+              Создать вакансию
+            </button>
           )}
         </div>
+      )}
+
+      {/* Create Vacancy Modal */}
+      {showCreateModal && (
+        <CreateVacancyModal
+          onClose={() => setShowCreateModal(false)}
+          onSubmit={handleCreateVacancy}
+          departments={departments}
+        />
       )}
     </div>
   );
