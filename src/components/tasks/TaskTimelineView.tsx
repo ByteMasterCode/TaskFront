@@ -1,9 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Clock, User, ArrowRight, MessageSquare, Tag, UserPlus, UserMinus, CheckCircle, GitBranch, 
-  AlertTriangle, Code, Database, Palette, Server, Globe, Smartphone, Monitor, Chrome,
-  Firefox, Edge, Safari, Zap, Shield, Activity, FileText, Settings, Download
-} from 'lucide-react';
+import { Clock, User, ArrowRight, MessageSquare, Tag, UserPlus, UserMinus, CheckCircle, GitBranch, AlertTriangle, Code, Database, Palette, Server, Globe, Smartphone, Monitor, Chrome, Siren as Firefox, Badge as Edge, Variable as Safari, Zap, Shield, Activity, FileText, Settings, Download, Plus, X } from 'lucide-react';
 import { Task, TaskTransition } from '../../types';
 import { apiService } from '../../services/api';
 
@@ -314,122 +310,6 @@ const TaskTimelineView: React.FC<TaskTimelineViewProps> = ({ task }) => {
                 );
               })()}
               
-              {/* Обычный контент для остальных секций */}
-              {section.type !== 'api' && section.type !== 'database' && 
-               !(section.type === 'design' && section.content.includes('браузеров')) &&
-               !(section.type === 'quality' && section.content.includes('производительность')) && (
-                <div className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">
-                  {section.content.trim()}
-                </div>
-              )}
-              
-              {/* Если нет специальной обработки, показываем обычный текст */}
-              {((section.type === 'api' && parseApiEndpoints(section.content).length === 0) ||
-                (section.type === 'database' && parseDatabaseChanges(section.content).length === 0)) && (
-                <div className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">
-                  {section.content.trim()}
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
-    );
-  };
-
-  if (loading) {
-    return (
-      <div className="p-6 text-center">
-        <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
-        <p className="text-gray-600 font-medium">Загрузка истории изменений...</p>
-      </div>
-    );
-  }
-
-  if (transitions.length === 0) {
-    return (
-      <div className="p-6 text-center">
-        <div className="w-16 h-16 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
-          <Clock className="h-8 w-8 text-gray-400" />
-        </div>
-        <h3 className="font-semibold text-gray-700 mb-1">Нет истории изменений</h3>
-        <p className="text-sm text-gray-500">История появится после первых действий с задачей</p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-6">
-      {transitions.map((transition, index) => (
-        <div key={transition.id} className="flex items-start space-x-4">
-          {/* Timeline line */}
-          <div className="flex flex-col items-center">
-            <div className={`p-3 rounded-full shadow-sm ${getTransitionColor(transition.type)}`}>
-              {getTransitionIcon(transition.type)}
-            </div>
-            {index < transitions.length - 1 && (
-              <div className="w-px h-12 bg-gradient-to-b from-gray-300 to-gray-200 mt-3"></div>
-            )}
-          </div>
-
-          {/* Content */}
-          <div className="flex-1 min-w-0">
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden">
-              <div className="p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <h4 className="font-semibold text-gray-900 text-base">
-                    {getTransitionLabel(transition)}
-                  </h4>
-                  <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full font-medium">
-                    {new Date(transition.createdAt).toLocaleString('ru-RU', {
-                      day: '2-digit',
-                      month: '2-digit',
-                      year: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    })}
-                  </span>
-                </div>
-
-                {transition.user && (
-                  <div className="flex items-center space-x-3 mb-3 p-2 bg-gray-50 rounded-lg">
-                    <div className="w-8 h-8 bg-gradient-to-br from-blue-100 to-blue-200 rounded-full flex items-center justify-center border border-blue-300">
-                      <User className="h-4 w-4 text-blue-600" />
-                    </div>
-                    <div>
-                      <span className="text-sm font-semibold text-gray-800">
-                        {transition.user.name || 'Пользователь'}
-                      </span>
-                      <p className="text-xs text-gray-500">{transition.user.phone}</p>
-                    </div>
-                  </div>
-                )}
-
-                {transition.comment && renderStructuredComment(transition.comment)}
-              </div>
-            </div>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-};
-                              {endpoint.method}
-                            </span>
-                            <code className="text-sm font-mono text-gray-800 bg-gray-100 px-2 py-1 rounded">
-                              {endpoint.path}
-                            </code>
-                          </div>
-                          {endpoint.description && (
-                            <p className="text-xs text-gray-600 mt-1 ml-2">{endpoint.description}</p>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  );
-                }
-              })()}
-              
               {/* Специальная обработка для изменений БД */}
               {section.type === 'database' && (() => {
                 const changes = parseDatabaseChanges(section.content);
@@ -452,7 +332,9 @@ const TaskTimelineView: React.FC<TaskTimelineViewProps> = ({ task }) => {
               })()}
               
               {/* Обычный контент для остальных секций */}
-              {section.type !== 'api' && section.type !== 'database' && (
+              {section.type !== 'api' && section.type !== 'database' && 
+               !(section.type === 'design' && section.content.includes('браузеров')) &&
+               !(section.type === 'quality' && section.content.includes('производительность')) && (
                 <div className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">
                   {section.content.trim()}
                 </div>
@@ -465,7 +347,7 @@ const TaskTimelineView: React.FC<TaskTimelineViewProps> = ({ task }) => {
                   {section.content.trim()}
                 </div>
               )}
-              </div>
+            </div>
           );
         })}
       </div>
