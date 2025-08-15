@@ -352,7 +352,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ board, project, onBack }) => 
             <DragDropContext onDragEnd={handleDragEnd}>
               <div className="flex space-x-4 h-full min-w-max px-6 py-4">
                 {stages.map((s) => (
-                    <div key={s.id} className="flex-shrink-0 w-80">
+                    <div key={s.id} className="flex-shrink-0 w-96">
                       <div className="bg-gradient-to-b from-gray-50 to-gray-100 rounded-xl h-full flex flex-col shadow-sm border border-gray-200/50 backdrop-blur-sm overflow-hidden">
                         {/* Stage Header */}
                         <div className="p-4 border-b border-gray-200/70 flex-shrink-0 bg-white/60 rounded-t-xl backdrop-blur-sm overflow-hidden">
@@ -446,7 +446,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ board, project, onBack }) => 
 
                 {/* Нераспределённые задачи (stageId больше не существует) */}
                 {orphanTasks.length > 0 && (
-                    <div className="flex-shrink-0 w-80">
+                    <div className="flex-shrink-0 w-96">
                       <div className="bg-gradient-to-b from-yellow-50 to-yellow-100 rounded-xl h-full flex flex-col shadow-sm border border-yellow-200/50 overflow-hidden">
                         <div className="p-4 border-b border-yellow-200/70 bg-white/60 rounded-t-xl overflow-hidden">
                           <div className="flex items-center justify-between">
