@@ -16,10 +16,15 @@ import {
   Edit,
   Trash2,
   UserX,
-  ArrowRightLeft
+  ArrowRightLeft,
+  Eye
 } from 'lucide-react';
 import { Worker, Department, WorkerStatus } from '../../types';
 import { hrApiService } from '../../services/hrApi';
+import CreateWorkerModal from './CreateWorkerModal';
+import EditWorkerModal from './EditWorkerModal';
+import TransferWorkerModal from './TransferWorkerModal';
+import WorkerDetailsModal from './WorkerDetailsModal';
 
 const WorkersPage: React.FC = () => {
   const [workers, setWorkers] = useState<Worker[]>([]);
@@ -30,6 +35,10 @@ const WorkersPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterDepartment, setFilterDepartment] = useState<string>('');
   const [filterStatus, setFilterStatus] = useState<WorkerStatus | ''>('');
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [editingWorker, setEditingWorker] = useState<Worker | null>(null);
+  const [transferringWorker, setTransferringWorker] = useState<Worker | null>(null);
+  const [viewingWorker, setViewingWorker] = useState<Worker | null>(null);
 
   useEffect(() => {
     loadData();
@@ -50,6 +59,58 @@ const WorkersPage: React.FC = () => {
       setDepartments([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleCreateWorker = async (data: {
+    employeeId: string;
+    firstName: string;
+    lastName: string;
+    middleName?: string;
+    phone: string;
+    email?: string;
+    birthDate?: string;
+    hireDate: string;
+    departmentId: string;
+    position: string;
+    paymentType: any;
+    baseSalary?: number;
+    hourlyRate?: number;
+    pieceRate?: number;
+    notes?: string;
+  }) => {
+    try {
+      const newWorker = await hrApiService.createWorker(data);
+      setWorkers(prev => [newWorker, ...prev]);
+      setShowCreateModal(false);
+    } catch (err) {
+      throw err;
+    }
+  };
+
+  const handleEditWorker = async (workerId: string, data: Partial<Worker>) => {
+    try {
+      const updatedWorker = await hrApiService.updateWorker(workerId, data);
+      setWorkers(prev => prev.map(w => w.id === workerId ? updatedWorker : w));
+      setEditingWorker(null);
+    } catch (err) {
+      throw err;
+    }
+  };
+
+  const handleTransferWorker = async (data: {
+    workerId: string;
+    newDepartmentId: string;
+    newPosition: string;
+    effectiveDate: string;
+    reason: string;
+  }) => {
+    try {
+      await hrApiService.transferWorker(data);
+      await loadData(); // Перезагружаем данные
+      setTransferringWorker(null);
+    } catch (err) {
+      throw err;
     }
   };
 
@@ -222,7 +283,7 @@ const WorkersPage: React.FC = () => {
                 }`}
               >
                 <List className="h-5 w-5" />
-              </button>
+              onClick={() => setShowCreateModal(true)}
             </div>
             <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-medium flex items-center space-x-2 shadow-lg hover:shadow-xl transition-all duration-200">
               <Plus className="h-5 w-5" />
@@ -324,10 +385,25 @@ const WorkersPage: React.FC = () => {
                 {/* Actions */}
                 <div className="flex items-center space-x-2 mt-4 pt-4 border-t border-gray-100">
                   <button className="flex-1 bg-blue-50 hover:bg-blue-100 text-blue-700 py-2 px-3 rounded-lg font-medium transition-colors flex items-center justify-center space-x-1 text-sm">
-                    <Edit className="w-3 h-3" />
-                    <span>Редактировать</span>
+                    <Eye className="w-3 h-3" />
+                    <span>Просмотр</span>
                   </button>
-                  <button className="bg-orange-50 hover:bg-orange-100 text-orange-700 p-2 rounded-lg transition-colors">
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setEditingWorker(worker);
+                    }}
+                    className="bg-orange-50 hover:bg-orange-100 text-orange-700 p-2 rounded-lg transition-colors"
+                  >
+                    <Edit className="w-3 h-3" />
+                  </button>
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setTransferringWorker(worker);
+                    }}
+                    className="bg-purple-50 hover:bg-purple-100 text-purple-700 p-2 rounded-lg transition-colors"
+                  >
                     <ArrowRightLeft className="w-3 h-3" />
                   </button>
                   <button 
@@ -398,10 +474,22 @@ const WorkersPage: React.FC = () => {
                     </td>
                     <td className="py-4 px-6 text-right">
                       <div className="flex items-center justify-end space-x-2">
-                        <button className="text-blue-600 hover:text-blue-800 p-1 rounded transition-colors">
+                        <button 
+                          onClick={() => setViewingWorker(worker)}
+                          className="text-blue-600 hover:text-blue-800 p-1 rounded transition-colors"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </button>
+                        <button 
+                          onClick={() => setEditingWorker(worker)}
+                          className="text-orange-600 hover:text-orange-800 p-1 rounded transition-colors"
+                        >
                           <Edit className="h-4 w-4" />
                         </button>
-                        <button className="text-orange-600 hover:text-orange-800 p-1 rounded transition-colors">
+                        <button 
+                          onClick={() => setTransferringWorker(worker)}
+                          className="text-purple-600 hover:text-purple-800 p-1 rounded transition-colors"
+                        >
                           <ArrowRightLeft className="h-4 w-4" />
                         </button>
                         <button 
@@ -428,6 +516,48 @@ const WorkersPage: React.FC = () => {
             {searchQuery ? 'Попробуйте изменить параметры поиска' : 'Добавьте первого сотрудника'}
           </p>
         </div>
+      )}
+
+      {/* Create Worker Modal */}
+      {showCreateModal && (
+        <CreateWorkerModal
+          onClose={() => setShowCreateModal(false)}
+          onSubmit={handleCreateWorker}
+          departments={departments}
+        />
+      )}
+
+      {/* Edit Worker Modal */}
+      {editingWorker && (
+        <EditWorkerModal
+          worker={editingWorker}
+          onClose={() => setEditingWorker(null)}
+          onSubmit={(data) => handleEditWorker(editingWorker.id, data)}
+          departments={departments}
+        />
+      )}
+
+      {/* Transfer Worker Modal */}
+      {transferringWorker && (
+        <TransferWorkerModal
+          worker={transferringWorker}
+          onClose={() => setTransferringWorker(null)}
+          onSubmit={handleTransferWorker}
+          departments={departments}
+        />
+      )}
+
+      {/* Worker Details Modal */}
+      {viewingWorker && (
+        <WorkerDetailsModal
+          worker={viewingWorker}
+          onClose={() => setViewingWorker(null)}
+          onEdit={() => {
+            setEditingWorker(viewingWorker);
+            setViewingWorker(null);
+          }}
+          departments={departments}
+        />
       )}
     </div>
   );
