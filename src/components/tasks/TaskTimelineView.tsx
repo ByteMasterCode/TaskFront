@@ -65,36 +65,39 @@ const TaskTimelineView: React.FC<TaskTimelineViewProps> = ({ task }) => {
   };
 
   const parseStructuredComment = (comment: string) => {
-    if (!comment.includes('**') && !comment.includes('#')) {
+    if (!comment.includes('**') && !comment.includes('#') && !comment.includes('🔌') && !comment.includes('🗄️')) {
       return { isStructured: false, content: comment };
     }
 
-    const sections: { type: string; title: string; content: string; icon: React.ReactNode }[] = [];
+    const sections: { type: string; title: string; content: string; icon: React.ReactNode; items?: any[] }[] = [];
     const lines = comment.split('\n');
     let currentSection: { type: string; title: string; content: string; icon: React.ReactNode } | null = null;
 
     for (const line of lines) {
-      if (line.startsWith('# ') || line.startsWith('## ')) {
+      if (line.startsWith('# ') || line.startsWith('## ') || line.includes('**') && line.includes(':')) {
         if (currentSection) {
           sections.push(currentSection);
         }
-        const title = line.replace(/^#+\s*/, '').replace(/\*\*/g, '');
+        const title = line.replace(/^#+\s*/, '').replace(/\*\*/g, '').replace(/🔌|🗄️|🎨|⚠️|🚀|📊/g, '').trim();
         let icon = <MessageSquare className="h-4 w-4" />;
         let type = 'default';
 
-        if (title.includes('Статус') || title.includes('выполнения')) {
+        if (line.includes('📊') || title.includes('Статус') || title.includes('выполнения')) {
           icon = <CheckCircle className="h-4 w-4" />;
           type = 'status';
-        } else if (title.includes('Техническая') || title.includes('API') || title.includes('База')) {
+        } else if (line.includes('🔌') || title.includes('API') || title.includes('Endpoints')) {
           icon = <Code className="h-4 w-4" />;
-          type = 'technical';
-        } else if (title.includes('качества') || title.includes('Тестирование')) {
-          icon = <AlertTriangle className="h-4 w-4" />;
-          type = 'quality';
-        } else if (title.includes('UI/UX') || title.includes('Дизайн')) {
+          type = 'api';
+        } else if (line.includes('🗄️') || title.includes('База') || title.includes('данных')) {
+          icon = <Database className="h-4 w-4" />;
+          type = 'database';
+        } else if (line.includes('🎨') || title.includes('UI/UX') || title.includes('Дизайн')) {
           icon = <Palette className="h-4 w-4" />;
           type = 'design';
-        } else if (title.includes('Развертывание')) {
+        } else if (line.includes('⚠️') || title.includes('Проблемы') || title.includes('качества')) {
+          icon = <AlertTriangle className="h-4 w-4" />;
+          type = 'quality';
+        } else if (line.includes('🚀') || title.includes('Развертывание')) {
           icon = <Server className="h-4 w-4" />;
           type = 'deployment';
         }
@@ -112,12 +115,69 @@ const TaskTimelineView: React.FC<TaskTimelineViewProps> = ({ task }) => {
     return { isStructured: true, sections };
   };
 
+  const parseApiEndpoints = (content: string) => {
+    const endpoints: { method: string; path: string; description: string }[] = [];
+    const lines = content.split('\n');
+    
+    for (const line of lines) {
+      const match = line.match(/^\s*-\s*(GET|POST|PUT|DELETE|PATCH)\s+([^\s]+)\s*-?\s*(.*)$/);
+      if (match) {
+        endpoints.push({
+          method: match[1],
+          path: match[2],
+          description: match[3] || ''
+        });
+      }
+    }
+    
+    return endpoints;
+  };
+
+  const parseDatabaseChanges = (content: string) => {
+    const changes: { type: string; description: string }[] = [];
+    const lines = content.split('\n');
+    
+    for (const line of lines) {
+      const match = line.match(/^\s*-\s*(CREATE|UPDATE|DELETE|INDEX|MIGRATION)\s*[:\-]?\s*(.*)$/);
+      if (match) {
+        changes.push({
+          type: match[1],
+          description: match[2] || ''
+        });
+      }
+    }
+    
+    return changes;
+  };
+
+  const getMethodColor = (method: string) => {
+    switch (method) {
+      case 'GET': return 'bg-blue-100 text-blue-800 border-blue-300';
+      case 'POST': return 'bg-green-100 text-green-800 border-green-300';
+      case 'PUT': return 'bg-orange-100 text-orange-800 border-orange-300';
+      case 'DELETE': return 'bg-red-100 text-red-800 border-red-300';
+      case 'PATCH': return 'bg-purple-100 text-purple-800 border-purple-300';
+      default: return 'bg-gray-100 text-gray-800 border-gray-300';
+    }
+  };
+
+  const getDbTypeColor = (type: string) => {
+    switch (type) {
+      case 'CREATE': return 'bg-green-100 text-green-800';
+      case 'UPDATE': return 'bg-blue-100 text-blue-800';
+      case 'DELETE': return 'bg-red-100 text-red-800';
+      case 'INDEX': return 'bg-purple-100 text-purple-800';
+      case 'MIGRATION': return 'bg-orange-100 text-orange-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
   const renderStructuredComment = (comment: string) => {
     const parsed = parseStructuredComment(comment);
     
     if (!parsed.isStructured) {
       return (
-        <div className="bg-gray-50 rounded-lg p-3 mt-2">
+        <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg p-3 mt-2 border border-gray-200">
           <p className="text-sm text-gray-700 whitespace-pre-wrap">{comment}</p>
         </div>
       );
@@ -128,25 +188,85 @@ const TaskTimelineView: React.FC<TaskTimelineViewProps> = ({ task }) => {
         {parsed.sections?.map((section, index) => {
           const getSectionColor = (type: string) => {
             switch (type) {
-              case 'status': return 'from-green-50 to-emerald-50 border-green-200';
-              case 'technical': return 'from-blue-50 to-indigo-50 border-blue-200';
-              case 'quality': return 'from-purple-50 to-pink-50 border-purple-200';
+              case 'status': return 'from-green-50 to-emerald-100 border-green-300';
+              case 'api': return 'from-blue-50 to-indigo-100 border-blue-300';
+              case 'database': return 'from-purple-50 to-violet-100 border-purple-300';
+              case 'quality': return 'from-red-50 to-pink-100 border-red-300';
               case 'design': return 'from-pink-50 to-rose-50 border-pink-200';
               case 'deployment': return 'from-orange-50 to-amber-50 border-orange-200';
-              default: return 'from-gray-50 to-gray-100 border-gray-200';
+              default: return 'from-gray-50 to-slate-100 border-gray-300';
             }
           };
 
           return (
-            <div key={index} className={`bg-gradient-to-r ${getSectionColor(section.type)} rounded-lg p-3 border`}>
-              <div className="flex items-center space-x-2 mb-2">
+            <div key={index} className={`bg-gradient-to-br ${getSectionColor(section.type)} rounded-xl p-4 border shadow-sm`}>
+              <div className="flex items-center space-x-2 mb-3">
                 {section.icon}
-                <h4 className="font-semibold text-gray-800 text-sm">{section.title}</h4>
+                <h4 className="font-bold text-gray-900 text-sm">{section.title}</h4>
               </div>
-              <div className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">
-                {section.content.trim()}
+              
+              {/* Специальная обработка для API endpoints */}
+              {section.type === 'api' && (() => {
+                const endpoints = parseApiEndpoints(section.content);
+                if (endpoints.length > 0) {
+                  return (
+                    <div className="space-y-2">
+                      {endpoints.map((endpoint, idx) => (
+                        <div key={idx} className="bg-white/70 rounded-lg p-2 border border-blue-200">
+                          <div className="flex items-center space-x-2">
+                            <span className={`px-2 py-1 rounded text-xs font-bold border ${getMethodColor(endpoint.method)}`}>
+                              {endpoint.method}
+                            </span>
+                            <code className="text-sm font-mono text-gray-800 bg-gray-100 px-2 py-1 rounded">
+                              {endpoint.path}
+                            </code>
+                          </div>
+                          {endpoint.description && (
+                            <p className="text-xs text-gray-600 mt-1 ml-2">{endpoint.description}</p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  );
+                }
+              })()}
+              
+              {/* Специальная обработка для изменений БД */}
+              {section.type === 'database' && (() => {
+                const changes = parseDatabaseChanges(section.content);
+                if (changes.length > 0) {
+                  return (
+                    <div className="space-y-2">
+                      {changes.map((change, idx) => (
+                        <div key={idx} className="bg-white/70 rounded-lg p-2 border border-purple-200">
+                          <div className="flex items-center space-x-2">
+                            <span className={`px-2 py-1 rounded text-xs font-bold ${getDbTypeColor(change.type)}`}>
+                              {change.type}
+                            </span>
+                            <span className="text-sm text-gray-800">{change.description}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                }
+              })()}
+              
+              {/* Обычный контент для остальных секций */}
+              {section.type !== 'api' && section.type !== 'database' && (
+                <div className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">
+                  {section.content.trim()}
+                </div>
+              )}
+              
+              {/* Если нет специальной обработки, показываем обычный текст */}
+              {((section.type === 'api' && parseApiEndpoints(section.content).length === 0) ||
+                (section.type === 'database' && parseDatabaseChanges(section.content).length === 0)) && (
+                <div className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">
+                  {section.content.trim()}
+                </div>
+              )}
               </div>
-            </div>
           );
         })}
       </div>

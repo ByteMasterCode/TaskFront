@@ -53,9 +53,62 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, labels, stages, onMove, onApp
 
         {/* Description */}
         {task.description && (
-          <p className="text-gray-600 text-xs mb-3 line-clamp-2 leading-relaxed break-words">
-            {task.description}
-          </p>
+          <div className="mb-3">
+            {(() => {
+              // Проверяем, является ли описание структурированным отчетом
+              if (task.description.includes('## ') || task.description.includes('**Статус:**') || task.description.includes('🔌 **API Endpoints:**')) {
+                const lines = task.description.split('\n');
+                const statusLine = lines.find(line => line.includes('**Статус:**'));
+                const apiLine = lines.find(line => line.includes('🔌 **API Endpoints:**'));
+                const dbLine = lines.find(line => line.includes('🗄️ **База данных:**'));
+                
+                return (
+                  <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-2 border border-blue-200">
+                    <div className="flex items-center space-x-2 mb-1">
+                      <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                      <span className="text-xs font-semibold text-blue-800">Профессиональный отчет</span>
+                    </div>
+                    
+                    {statusLine && (
+                      <div className="text-xs text-blue-700 mb-1">
+                        {statusLine.replace(/\*\*/g, '').replace('Статус:', '📊')}
+                      </div>
+                    )}
+                    
+                    <div className="flex flex-wrap gap-1">
+                      {apiLine && (
+                        <span className="bg-green-100 text-green-700 px-2 py-0.5 rounded-full text-xs font-medium">
+                          🔌 API
+                        </span>
+                      )}
+                      {dbLine && (
+                        <span className="bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full text-xs font-medium">
+                          🗄️ БД
+                        </span>
+                      )}
+                      {task.description.includes('🎨 **UI/UX:**') && (
+                        <span className="bg-pink-100 text-pink-700 px-2 py-0.5 rounded-full text-xs font-medium">
+                          🎨 UI/UX
+                        </span>
+                      )}
+                      {task.description.includes('⚠️ **Проблемы:**') && (
+                        <span className="bg-red-100 text-red-700 px-2 py-0.5 rounded-full text-xs font-medium">
+                          ⚠️ Проблемы
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              } else {
+                // Обычное описание
+                return (
+                  <p className="text-gray-600 text-xs line-clamp-2 leading-relaxed break-words">
+                    {task.description}
+                  </p>
+                );
+              }
+            })()}
+          </div>
         )}
 
         {/* Labels */}
