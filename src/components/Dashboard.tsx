@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import Sidebar from './dashboard/Sidebar';
 import TasksPage from "./tasks/TasksPage";
 import ProjectsPage from "./projects/ProjectsPage";
+import CompanyPage from "./company/CompanyPage";
 import UsersPage from "./users/UsersPage";
 import { User } from '../types';
 
@@ -28,6 +29,8 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
         return <TasksPage />;
       case 'projects':
         return <ProjectsPage />;
+      case 'company':
+        return <CompanyPage />;
       case 'users':
         return <UsersPage />;
       default:

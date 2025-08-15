@@ -1,5 +1,5 @@
 import React from 'react';
-import { CheckSquare, Target, Users, User, LogOut, Menu, X } from 'lucide-react';
+import { CheckSquare, Target, Users, User, LogOut, Menu, X, Building2 } from 'lucide-react';
 
 interface SidebarProps {
   collapsed: boolean;
@@ -21,6 +21,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   const menuItems = [
     { id: 'tasks', label: 'Задачи', icon: CheckSquare },
     { id: 'projects', label: 'Проекты', icon: Target },
+    { id: 'company', label: 'Компания', icon: Building2 },
     { id: 'users', label: 'Команда', icon: Users },
   ];
 

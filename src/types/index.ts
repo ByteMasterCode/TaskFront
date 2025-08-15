@@ -147,3 +147,163 @@ export interface Board {
   labels?: Label[];
   tasks?: Task[];
 }
+
+// HR System Types
+
+export interface Department {
+  id: ID;
+  name: string;
+  description?: string;
+  parentId?: ID | null;
+  status: 'active' | 'inactive';
+  createdAt?: string;
+  updatedAt?: string;
+  children?: Department[];
+  workers?: Worker[];
+}
+
+export type PaymentType = 'salary' | 'piecework' | 'mixed';
+export type WorkerStatus = 'active' | 'vacation' | 'sick_leave' | 'dismissed' | 'probation';
+export type AttendanceStatus = 'present' | 'absent' | 'late' | 'early_leave' | 'sick_leave' | 'vacation' | 'business_trip';
+export type CandidateStatus = 'new' | 'contacted' | 'interview_scheduled' | 'interviewed' | 'hired' | 'rejected' | 'withdrawn';
+export type VacancyStatus = 'open' | 'in_progress' | 'closed' | 'cancelled';
+export type InterviewStatus = 'scheduled' | 'completed' | 'cancelled';
+
+export interface Worker {
+  id: ID;
+  employeeId: string;
+  firstName: string;
+  lastName: string;
+  middleName?: string;
+  phone: string;
+  email?: string;
+  birthDate?: string;
+  hireDate: string;
+  departmentId: ID;
+  department?: Department;
+  position: string;
+  paymentType: PaymentType;
+  baseSalary?: number;
+  hourlyRate?: number;
+  pieceRate?: number;
+  status: WorkerStatus;
+  notes?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface Attendance {
+  id: ID;
+  workerId: ID;
+  worker?: Worker;
+  date: string;
+  checkIn?: string;
+  checkOut?: string;
+  scheduledStart: string;
+  scheduledEnd: string;
+  status: AttendanceStatus;
+  hoursWorked?: number;
+  overtimeHours?: number;
+  penaltyAmount?: number;
+  penaltyReason?: string;
+  notes?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface Vacancy {
+  id: ID;
+  title: string;
+  description: string;
+  departmentId: ID;
+  department?: Department;
+  position: string;
+  status: VacancyStatus;
+  quantity: number;
+  salaryFrom?: number;
+  salaryTo?: number;
+  paymentType: PaymentType;
+  requirements?: string;
+  responsibilities?: string;
+  openDate: string;
+  closeDate?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  candidates?: Candidate[];
+}
+
+export interface Candidate {
+  id: ID;
+  firstName: string;
+  lastName: string;
+  middleName?: string;
+  phone: string;
+  email?: string;
+  birthDate?: string;
+  vacancyId: ID;
+  vacancy?: Vacancy;
+  status: CandidateStatus;
+  resume?: string;
+  experience?: string;
+  education?: string;
+  expectedSalary?: number;
+  rating?: number;
+  notes?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  interviews?: Interview[];
+}
+
+export interface Interview {
+  id: ID;
+  candidateId: ID;
+  candidate?: Candidate;
+  scheduledDate: string;
+  actualDate?: string;
+  interviewerName: string;
+  interviewerPosition: string;
+  status: InterviewStatus;
+  technicalScore?: number;
+  softSkillsScore?: number;
+  culturalFitScore?: number;
+  overallScore?: number;
+  recommendation?: 'hire' | 'reject' | 'consider';
+  feedback?: string;
+  notes?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface SalaryCalculation {
+  id: ID;
+  workerId: ID;
+  worker?: Worker;
+  period: string; // YYYY-MM
+  baseSalary: number;
+  overtimePay: number;
+  bonuses: number;
+  penalties: number;
+  totalAmount: number;
+  status: 'calculated' | 'approved' | 'paid';
+  paymentDate?: string;
+  notes?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface PieceworkPayment {
+  id: ID;
+  workerId: ID;
+  worker?: Worker;
+  period: string;
+  workType: string;
+  quantity: number;
+  pieceRate: number;
+  qualityBonus?: number;
+  totalAmount: number;
+  status: 'calculated' | 'approved' | 'paid';
+  paymentDate?: string;
+  notes?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
