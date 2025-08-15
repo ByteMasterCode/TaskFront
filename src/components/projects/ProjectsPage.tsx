@@ -1,27 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import {
   FolderOpen,
-  Users,
-  Calendar,
-  CheckCircle,
-  Clock,
-  AlertCircle,
-  Star,
-  MoreHorizontal,
   Plus,
-  Search,
-  Filter,
-  Grid3X3,
-  List,
-  Settings,
-  Trash2,
-  Edit,
-  Eye
 } from 'lucide-react';
 import { Project } from '../types';
 import { apiService } from '../../services/api';
 import CreateProjectModal from './CreateProjectModal';
 import BoardsView from '../boards/BoardsView';
+import ProjectStats from './ProjectStats';
+import ProjectFilters from './ProjectFilters';
+import ProjectCard from './ProjectCard';
+import ProjectList from './ProjectList';
 
 const ProjectsPage: React.FC = () => {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -113,86 +102,15 @@ const ProjectsPage: React.FC = () => {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-4 gap-6 mb-6">
-          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-            <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
-                <FolderOpen className="h-6 w-6 text-white" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-gray-900">{projects.length}</p>
-                <p className="text-sm text-gray-600">Всего проектов</p>
-              </div>
-            </div>
-          </div>
-          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-            <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl flex items-center justify-center">
-                <CheckCircle className="h-6 w-6 text-white" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-gray-900">0</p>
-                <p className="text-sm text-gray-600">Активных</p>
-              </div>
-            </div>
-          </div>
-          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-            <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center">
-                <Users className="h-6 w-6 text-white" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-gray-900">0</p>
-                <p className="text-sm text-gray-600">Участников</p>
-              </div>
-            </div>
-          </div>
-          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-            <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center">
-                <Clock className="h-6 w-6 text-white" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-gray-900">0</p>
-                <p className="text-sm text-gray-600">Задач</p>
-              </div>
-            </div>
-          </div>
-        </div>
+        <ProjectStats projects={projects} />
 
         {/* Filters */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Поиск проектов..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200 text-sm w-80"
-              />
-            </div>
-          </div>
-          <div className="flex items-center space-x-2">
-            <button
-              onClick={() => setViewMode('grid')}
-              className={`p-2 rounded-lg transition-all duration-200 ${
-                viewMode === 'grid' ? 'bg-emerald-100 text-emerald-600' : 'text-gray-600 hover:bg-gray-100'
-              }`}
-            >
-              <Grid3X3 className="h-5 w-5" />
-            </button>
-            <button
-              onClick={() => setViewMode('list')}
-              className={`p-2 rounded-lg transition-all duration-200 ${
-                viewMode === 'list' ? 'bg-emerald-100 text-emerald-600' : 'text-gray-600 hover:bg-gray-100'
-              }`}
-            >
-              <List className="h-5 w-5" />
-            </button>
-          </div>
-        </div>
+        <ProjectFilters
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          viewMode={viewMode}
+          onViewModeChange={setViewMode}
+        />
       </div>
 
       {/* Error Message */}
@@ -206,166 +124,19 @@ const ProjectsPage: React.FC = () => {
       {viewMode === 'grid' ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredProjects.map((project) => (
-            <div
+            <ProjectCard
               key={project.id}
-             onClick={() => setSelectedProject(project)}
-              className="bg-white rounded-3xl shadow-lg border border-gray-100 hover:shadow-2xl transition-all duration-300 cursor-pointer group overflow-hidden transform hover:-translate-y-1"
-            >
-              {/* Project Header */}
-              <div className="h-40 bg-gradient-to-br from-blue-500 to-purple-600 p-6 relative overflow-hidden">
-                <div className="absolute inset-0 opacity-10">
-                  <div className="absolute top-4 right-4 w-20 h-20 border-2 border-white rounded-full"></div>
-                  <div className="absolute bottom-4 left-4 w-16 h-16 border border-white rounded-lg rotate-45"></div>
-                </div>
-                
-                <div className="flex items-start justify-between relative z-10">
-                  <div className="text-white flex-1">
-                    <div className="flex items-center space-x-2 mb-3">
-                      <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm">
-                        <FolderOpen className="h-4 w-4 text-white" />
-                      </div>
-                      <span className="text-white/80 text-sm font-medium">{project.key}</span>
-                    </div>
-                    <h3 className="text-2xl font-bold mb-2 group-hover:scale-105 transition-transform duration-300 leading-tight">
-                      {project.name}
-                    </h3>
-                    <div className="flex items-center space-x-4 text-white/90 text-sm">
-                      <div className="flex items-center space-x-1">
-                        <Users className="h-3 w-3" />
-                        <span>{project.members?.length || 0}</span>
-                      </div>
-                      <div className="flex items-center space-x-1">
-                        <Calendar className="h-3 w-3" />
-                        <span>{new Date(project.createdAt).toLocaleDateString('ru-RU')}</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="relative">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        // Show menu
-                      }}
-                      className="text-white/80 hover:text-white transition-colors duration-200"
-                    >
-                      <MoreHorizontal className="h-4 w-4" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              {/* Project Content */}
-              <div className="p-6">
-                <p className="text-gray-600 text-sm mb-6 line-clamp-2 leading-relaxed">
-                  {project.description || 'Описание проекта отсутствует'}
-                </p>
-
-                {/* Stats */}
-                <div className="grid grid-cols-3 gap-4 mb-6">
-                  <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-3 text-center">
-                    <div className="text-lg font-bold text-blue-600">{project.boards?.length || 0}</div>
-                    <div className="text-xs text-blue-600 font-medium">Досок</div>
-                  </div>
-                  <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-3 text-center">
-                    <div className="text-lg font-bold text-green-600">0</div>
-                    <div className="text-xs text-green-600 font-medium">Задач</div>
-                  </div>
-                  <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-3 text-center">
-                    <div className="text-lg font-bold text-purple-600">{project.members?.length || 0}</div>
-                    <div className="text-xs text-purple-600 font-medium">Участников</div>
-                  </div>
-                </div>
-
-                {/* Actions */}
-                <div className="flex items-center space-x-2">
-                  <div className="flex-1 bg-blue-50 text-blue-700 py-2 px-4 rounded-lg font-medium flex items-center justify-center space-x-2 pointer-events-none">
-                    <Eye className="w-4 h-4" />
-                    <span>Нажмите для открытия</span>
-                  </div>
-                  <button 
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      // Settings action
-                    }}
-                    className="bg-gray-50 hover:bg-gray-100 text-gray-700 p-2 rounded-lg transition-colors"
-                  >
-                    <Settings className="w-4 h-4" />
-                  </button>
-                  <button 
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDeleteProject(project.id);
-                    }}
-                    className="bg-red-50 hover:bg-red-100 text-red-700 p-2 rounded-lg transition-colors"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-            </div>
+              project={project}
+              onSelect={setSelectedProject}
+              onDelete={handleDeleteProject}
+            />
           ))}
         </div>
       ) : (
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-200">
-                <tr>
-                  <th className="text-left py-4 px-6 font-semibold text-gray-900">Проект</th>
-                  <th className="text-left py-4 px-6 font-semibold text-gray-900">Ключ</th>
-                  <th className="text-left py-4 px-6 font-semibold text-gray-900">Участники</th>
-                  <th className="text-left py-4 px-6 font-semibold text-gray-900">Создан</th>
-                  <th className="text-right py-4 px-6 font-semibold text-gray-900">Действия</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                {filteredProjects.map((project) => (
-                  <tr
-                    key={project.id}
-                    onClick={() => setSelectedProject(project)}
-                    className="hover:bg-gray-50 cursor-pointer transition-colors duration-200"
-                  >
-                    <td className="py-4 px-6">
-                      <div className="flex items-center space-x-4">
-                        <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                          <FolderOpen className="h-5 w-5 text-white" />
-                        </div>
-                        <div>
-                          <h3 className="font-semibold text-gray-900">{project.name}</h3>
-                          <p className="text-sm text-gray-600">{project.description}</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="py-4 px-6">
-                      <span className="bg-gray-100 text-gray-800 px-2 py-1 rounded text-sm font-mono">
-                        {project.key}
-                      </span>
-                    </td>
-                    <td className="py-4 px-6">
-                      <span className="text-sm text-gray-900">{project.members?.length || 0}</span>
-                    </td>
-                    <td className="py-4 px-6">
-                      <span className="text-sm text-gray-900">
-                        {new Date(project.createdAt).toLocaleDateString('ru-RU')}
-                      </span>
-                    </td>
-                    <td className="py-4 px-6 text-right">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          // Show menu
-                        }}
-                        className="text-gray-400 hover:text-gray-600 transition-colors duration-200"
-                      >
-                        <MoreHorizontal className="h-5 w-5" />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
+        <ProjectList
+          projects={filteredProjects}
+          onSelect={setSelectedProject}
+        />
       )}
 
       {filteredProjects.length === 0 && !loading && (
