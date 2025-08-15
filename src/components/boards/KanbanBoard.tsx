@@ -114,19 +114,26 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ board, project, onBack }) => 
     }
   };
 
-  const handleCreateStages = async (stagesData: {
-    key: string; name: string; order: number; department?: string; requiresApproval?: boolean; automation?: AutomationConfig;
-  }[]) => {
-    try {
-      const newStages = await apiService.setStagesWithAutomation(board.id, project.id, stagesData);
-      setStages(newStages);
-      setShowCreateStageModal(false);
-      // подстраховка: если какие-то задачи потеряли стадию — дорисуем их в «Нераспределено»
-      // (основная защита — бэковый upsert, см. предыдущее сообщение)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Ошибка сохранения стадий');
-    }
-  };
+// KanbanBoard.tsx
+const handleCreateStages = async (stagesData: {
+  key: string; name: string; order: number; department?: string; requiresApproval?: boolean; automation?: AutomationConfig;
+}[]) => {
+  try {
+    setLoading(true); // чтобы показать спиннер на время пересоздания пайплайна
+    setError('');
+    await apiService.setStagesWithAutomation(board.id, project.id, stagesData);
+
+    // 🔥 КРИТИЧНО: тянем заново задачи и стадии, иначе tasks держат старые stageId
+    await loadBoardData();
+
+    setShowCreateStageModal(false);
+  } catch (err) {
+    setError(err instanceof Error ? err.message : 'Ошибка сохранения стадий');
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   const handleApproveTask = async (taskId: string) => {
     try {
