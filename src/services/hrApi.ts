@@ -63,7 +63,57 @@ class HRApiService {
 
   getDepartmentHierarchy(): Promise<Department[]> {
     console.log('Making API request to /workers/department/hierarchy');
-    return this.request<Department[]>('/workers/department/hierarchy');
+    return this.request<Department[]>('/workers/department/hierarchy').catch(() => {
+      // Заглушка, пока API не реализован
+      console.log('API not implemented, using mock data');
+      return [
+        {
+          id: 'dept-1',
+          name: 'IT отдел',
+          description: 'Отдел информационных технологий',
+          parentId: null,
+          status: 'active' as const,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          children: [
+            {
+              id: 'dept-1-1',
+              name: 'Разработка',
+              description: 'Команда разработчиков',
+              parentId: 'dept-1',
+              status: 'active' as const,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+              children: [],
+              workers: []
+            },
+            {
+              id: 'dept-1-2',
+              name: 'QA',
+              description: 'Отдел тестирования',
+              parentId: 'dept-1',
+              status: 'active' as const,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+              children: [],
+              workers: []
+            }
+          ],
+          workers: []
+        },
+        {
+          id: 'dept-2',
+          name: 'Отдел продаж',
+          description: 'Команда по работе с клиентами',
+          parentId: null,
+          status: 'active' as const,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          children: [],
+          workers: []
+        }
+      ];
+    });
   }
 
   createDepartment(data: {
@@ -76,6 +126,20 @@ class HRApiService {
     return this.request<Department>('/workers/department', {
       method: 'POST',
       body: JSON.stringify(data)
+    }).catch(() => {
+      // Заглушка для создания отдела
+      console.log('Create department API not implemented, using mock response');
+      return {
+        id: `dept-${Date.now()}`,
+        name: data.name,
+        description: data.description,
+        parentId: data.parentId,
+        status: data.status || 'active',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        children: [],
+        workers: []
+      } as Department;
     });
   }
 
