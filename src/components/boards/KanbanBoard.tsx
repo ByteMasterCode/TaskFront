@@ -356,12 +356,12 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ board, project, onBack }) => 
                       <div className="bg-gradient-to-b from-gray-50 to-gray-100 rounded-xl h-full flex flex-col shadow-sm border border-gray-200/50 backdrop-blur-sm overflow-hidden">
                         {/* Stage Header */}
                         <div className="p-4 border-b border-gray-200/70 flex-shrink-0 bg-white/60 rounded-t-xl backdrop-blur-sm overflow-hidden">
-                          <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center justify-between mb-2 min-w-0">
                             <div className="flex items-center space-x-2">
                               <div className="w-3 h-3 rounded-full bg-gradient-to-r from-blue-500 to-purple-500" />
-                              <h3 className="font-bold text-gray-900 text-base truncate flex-1 min-w-0">{s.name}</h3>
+                              <h3 className="font-bold text-gray-900 text-base truncate">{s.name}</h3>
                             </div>
-                            <div className="flex items-center space-x-1 flex-shrink-0">
+                            <div className="flex items-center space-x-1 flex-shrink-0 ml-2">
                           <span className="bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-800 px-2 py-1 rounded-full text-xs font-bold shadow-sm">
                             {s.key}
                           </span>
@@ -379,7 +379,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ board, project, onBack }) => 
                               </button>
                               <button
                                   onClick={() => setEditingStageAutomation(s)}
-                                  className="p-1.5 text-white bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 rounded-lg transition-all duration-200 shadow-sm border border-purple-400 hover:shadow-md"
+                                  className="p-1.5 text-white bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md flex-shrink-0"
                                   title="Настроить автоматизацию"
                               >
                                 <Zap className="h-4 w-4" />
