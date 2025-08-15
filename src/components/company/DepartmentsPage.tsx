@@ -396,4 +396,14 @@ const DepartmentsPage: React.FC = () => {
   );
 };
 
+const getTotalWorkers = (dept: Department): number => {
+  let total = dept.workers?.length || 0;
+  if (dept.children) {
+    dept.children.forEach(child => {
+      total += getTotalWorkers(child);
+    });
+  }
+  return total;
+};
+
 export default DepartmentsPage;
