@@ -450,6 +450,7 @@ class HRApiService {
               email: 'anna@example.com',
               birthDate: '1995-03-20',
               vacancyId: 'vacancy-1',
+            }
             {
               id: 'candidate-1',
               firstName: 'Анна',
@@ -458,6 +459,7 @@ class HRApiService {
               email: 'anna@example.com',
               birthDate: '1995-03-20',
               vacancyId: 'vacancy-1',
+            }
             {
               id: 'candidate-1',
               firstName: 'Анна',
@@ -466,7 +468,9 @@ class HRApiService {
               email: 'anna@example.com',
               birthDate: '1995-03-20',
               vacancyId: 'vacancy-1',
-        },
+                    },
+          ]
+        }
         {
           id: 'vacancy-2',
           title: 'QA Engineer',
