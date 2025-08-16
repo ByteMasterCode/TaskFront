@@ -441,7 +441,15 @@ class HRApiService {
           openDate: '2025-01-10',
           createdAt: '2025-01-10T09:00:00Z',
           updatedAt: '2025-01-10T09:00:00Z',
-          candidates: []
+          candidates: [
+            {
+              id: 'candidate-1',
+              firstName: 'Анна',
+              lastName: 'Смирнова',
+              phone: '+998901111111',
+              email: 'anna@example.com',
+              birthDate: '1995-03-20',
+              vacancyId: 'vacancy-1',
         },
         {
           id: 'vacancy-2',

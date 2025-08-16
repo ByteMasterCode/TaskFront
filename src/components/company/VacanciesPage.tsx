@@ -1,57 +1,523 @@
-import React, { useState, useEffect } from 'react';
+// src/services/hrApi.ts
+
+import { AuthManager } from '../utils/auth';
 import {
-  Briefcase,
-  Plus,
-  Search,
-  Filter,
-  Users,
-  DollarSign,
-  Calendar,
-  Building2,
-  Eye,
-  Edit,
-  Trash2,
-  UserPlus
-} from 'lucide-react';
-import { Vacancy, Department, VacancyStatus } from '../../types';
-import { hrApiService } from '../../services/hrApi';
-import CreateVacancyModal from './CreateVacancyModal';
-import VacancyDetailsModal from './VacancyDetailsModal';
+  Department,
+  Worker,
+  Attendance,
+  Vacancy,
+  Candidate,
+  Interview,
+  SalaryCalculation,
+  PieceworkPayment,
+  PaymentType,
+  WorkerStatus,
+  AttendanceStatus,
+  CandidateStatus,
+  VacancyStatus,
+  InterviewStatus
+} from '../types';
 
-const VacanciesPage: React.FC = () => {
-  const [vacancies, setVacancies] = useState<Vacancy[]>([]);
-  const [departments, setDepartments] = useState<Department[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string>('');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [filterDepartment, setFilterDepartment] = useState<string>('');
-  const [filterStatus, setFilterStatus] = useState<VacancyStatus | ''>('');
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [selectedVacancy, setSelectedVacancy] = useState<Vacancy | null>(null);
+const BASE_URL = 'https://ehikchi.online';
 
-  useEffect(() => {
-    loadData();
-  }, []);
+class HRApiService {
+  private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+    const init: RequestInit = { ...options };
 
-  const loadData = async () => {
-    try {
-      setLoading(true);
-      const [vacanciesData, departmentsData] = await Promise.all([
-        hrApiService.getVacancies(),
-        hrApiService.getDepartments()
-      ]);
-      setVacancies(Array.isArray(vacanciesData) ? vacanciesData : []);
-      setDepartments(Array.isArray(departmentsData) ? departmentsData : []);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Ошибка загрузки данных');
-      setVacancies([]);
-      setDepartments([]);
-    } finally {
-      setLoading(false);
+    if (init.body && !(init.headers as any)?.['Content-Type']) {
+      init.headers = {
+        ...(init.headers || {}),
+        'Content-Type': 'application/json',
+      };
     }
-  };
 
-  const handleCreateVacancy = async (data: {
+    const response = await AuthManager.apiRequest(`${BASE_URL}${endpoint}`, init);
+
+    if (!response.ok) {
+      let message = `HTTP ${response.status}`;
+      try {
+        const err = await response.json();
+        message = err?.message || message;
+      } catch {}
+      throw new Error(message);
+    }
+
+    const text = await response.text();
+    if (!text) return undefined as unknown as T;
+
+    try {
+      return JSON.parse(text) as T;
+    } catch {
+      return undefined as unknown as T;
+    }
+  }
+
+  // ---------- DEPARTMENTS ----------
+  getDepartments(parentId?: string, status?: string): Promise<Department[]> {
+    const params = new URLSearchParams();
+    if (parentId) params.set('parentId', parentId);
+    if (status) params.set('status', status);
+    const query = params.toString();
+    return this.request<Department[]>(`/workers/department${query ? `?${query}` : ''}`);
+  }
+
+  getDepartmentHierarchy(): Promise<Department[]> {
+    console.log('Making API request to /workers/department/hierarchy');
+    return this.request<Department[]>('/workers/department/hierarchy').catch(() => {
+      // Заглушка, пока API не реализован
+      console.log('API not implemented, using mock data');
+      return [
+        {
+          id: 'dept-1',
+          name: 'IT отдел',
+          description: 'Отдел информационных технологий',
+          parentId: null,
+          status: 'active' as const,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          children: [
+            {
+              id: 'dept-1-1',
+              name: 'Разработка',
+              description: 'Команда разработчиков',
+              parentId: 'dept-1',
+              status: 'active' as const,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+              children: [],
+              workers: []
+            },
+            {
+              id: 'dept-1-2',
+              name: 'QA',
+              description: 'Отдел тестирования',
+              parentId: 'dept-1',
+              status: 'active' as const,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+              children: [],
+              workers: []
+            }
+          ],
+          workers: []
+        },
+        {
+          id: 'dept-2',
+          name: 'Отдел продаж',
+          description: 'Команда по работе с клиентами',
+          parentId: null,
+          status: 'active' as const,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          children: [],
+          workers: []
+        }
+      ];
+    });
+  }
+
+  createDepartment(data: {
+    name: string;
+    description?: string;
+    parentId?: string | null;
+    status?: string;
+  }): Promise<Department> {
+    console.log('Making API request to create department:', data);
+    return this.request<Department>('/workers/department', {
+      method: 'POST',
+      body: JSON.stringify(data)
+    }).catch(() => {
+      // Заглушка для создания отдела
+      console.log('Create department API not implemented, using mock response');
+      return {
+        id: `dept-${Date.now()}`,
+        name: data.name,
+        description: data.description,
+        parentId: data.parentId,
+        status: data.status || 'active',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        children: [],
+        workers: []
+      } as Department;
+    });
+  }
+
+  updateDepartment(id: string, data: Partial<Department>): Promise<Department> {
+    console.log('Making API request to update department:', id, data);
+    return this.request<Department>(`/workers/department/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data)
+    }).catch(() => {
+      // Заглушка для обновления отдела
+      console.log('Update department API not implemented, using mock response');
+      return {
+        ...data,
+        id,
+        updatedAt: new Date().toISOString()
+      } as Department;
+    });
+  }
+
+  deleteDepartment(id: string): Promise<void> {
+    console.log('Making API request to delete department:', id);
+    return this.request<void>(`/workers/department/${id}`, {
+      method: 'DELETE'
+    }).catch(() => {
+      // Заглушка для удаления отдела
+      console.log('Delete department API not implemented, using mock response');
+      return undefined as unknown as void;
+    });
+  }
+
+  // ---------- WORKERS ----------
+  getWorkers(departmentId?: string, status?: WorkerStatus): Promise<Worker[]> {
+    const params = new URLSearchParams();
+    if (departmentId) params.set('departmentId', departmentId);
+    if (status) params.set('status', status);
+    const query = params.toString();
+    console.log('Making API request to get workers');
+    return this.request<Worker[]>(`/workers/worker${query ? `?${query}` : ''}`).catch(() => {
+      // Заглушка для списка сотрудников
+      console.log('Get workers API not implemented, using mock data');
+      return [
+        {
+          id: 'worker-1',
+          employeeId: 'EMP001',
+          firstName: 'Иван',
+          lastName: 'Иванов',
+          middleName: 'Иванович',
+          phone: '+998901234567',
+          email: 'ivan@company.com',
+          birthDate: '1990-05-15',
+          hireDate: '2023-01-15',
+          departmentId: 'dept-1-1', // Разработка
+          position: 'Senior Developer',
+          paymentType: 'salary' as PaymentType,
+          baseSalary: 120000,
+          status: 'active' as WorkerStatus,
+          notes: 'Опытный разработчик с хорошими навыками',
+          createdAt: '2023-01-15T09:00:00Z',
+          updatedAt: '2023-01-15T09:00:00Z'
+        },
+        {
+          id: 'worker-2',
+          employeeId: 'EMP002',
+          firstName: 'Мария',
+          lastName: 'Петрова',
+          phone: '+998901234568',
+          email: 'maria@company.com',
+          hireDate: '2023-03-01',
+          departmentId: 'dept-1-2', // QA
+          position: 'QA Engineer',
+          paymentType: 'salary' as PaymentType,
+          baseSalary: 80000,
+          status: 'active' as WorkerStatus,
+          createdAt: '2023-03-01T09:00:00Z',
+          updatedAt: '2023-03-01T09:00:00Z'
+        },
+        {
+          id: 'worker-3',
+          employeeId: 'EMP003',
+          firstName: 'Алексей',
+          lastName: 'Сидоров',
+          phone: '+998901234569',
+          hireDate: '2023-06-01',
+          departmentId: 'dept-2', // Отдел продаж
+          position: 'Sales Manager',
+          paymentType: 'mixed' as PaymentType,
+          baseSalary: 60000,
+          hourlyRate: 500,
+          status: 'vacation' as WorkerStatus,
+          notes: 'В отпуске до 25 января',
+          createdAt: '2023-06-01T09:00:00Z',
+          updatedAt: '2023-06-01T09:00:00Z'
+        }
+      ] as Worker[];
+    });
+  }
+
+  getWorker(id: string): Promise<Worker> {
+    return this.request<Worker>(`/workers/worker/${id}`);
+  }
+
+  createWorker(data: {
+    employeeId: string;
+    firstName: string;
+    lastName: string;
+    middleName?: string;
+    phone: string;
+    email?: string;
+    birthDate?: string;
+    hireDate: string;
+    departmentId: string;
+    position: string;
+    paymentType: PaymentType;
+    baseSalary?: number;
+    hourlyRate?: number;
+    pieceRate?: number;
+    notes?: string;
+  }): Promise<Worker> {
+    console.log('Making API request to create worker:', data);
+    return this.request<Worker>('/workers/worker', {
+      method: 'POST',
+      body: JSON.stringify(data)
+    }).catch(() => {
+      // Заглушка для создания сотрудника
+      console.log('Create worker API not implemented, using mock response');
+      return {
+        id: `worker-${Date.now()}`,
+        employeeId: data.employeeId,
+        firstName: data.firstName,
+        lastName: data.lastName,
+        middleName: data.middleName,
+        phone: data.phone,
+        email: data.email,
+        birthDate: data.birthDate,
+        hireDate: data.hireDate,
+        departmentId: data.departmentId,
+        position: data.position,
+        paymentType: data.paymentType,
+        baseSalary: data.baseSalary,
+        hourlyRate: data.hourlyRate,
+        pieceRate: data.pieceRate,
+        status: 'active' as WorkerStatus,
+        notes: data.notes,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      } as Worker;
+    });
+  }
+
+  updateWorker(id: string, data: Partial<Worker>): Promise<Worker> {
+    console.log('Making API request to update worker:', id, data);
+    return this.request<Worker>(`/workers/worker/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data)
+    }).catch(() => {
+      // Заглушка для обновления сотрудника
+      console.log('Update worker API not implemented, using mock response');
+      return {
+        ...data,
+        id,
+        updatedAt: new Date().toISOString()
+      } as Worker;
+    });
+  }
+
+  transferWorker(data: {
+    workerId: string;
+    newDepartmentId: string;
+    newPosition: string;
+    effectiveDate: string;
+    reason: string;
+  }): Promise<void> {
+    console.log('Making API request to transfer worker:', data);
+    return this.request<void>('/workers/worker/transfer', {
+      method: 'POST',
+      body: JSON.stringify(data)
+    }).catch(() => {
+      // Заглушка для перевода сотрудника
+      console.log('Transfer worker API not implemented, using mock response');
+      return undefined as unknown as void;
+    });
+  }
+
+  dismissWorker(data: {
+    workerId: string;
+    dismissalDate: string;
+    reason: string;
+  }): Promise<void> {
+    console.log('Making API request to dismiss worker:', data);
+    return this.request<void>('/workers/worker/dismiss', {
+      method: 'POST',
+      body: JSON.stringify(data)
+    }).catch(() => {
+      // Заглушка для увольнения сотрудника
+      console.log('Dismiss worker API not implemented, using mock response');
+      return undefined as unknown as void;
+    });
+  }
+
+  // ---------- ATTENDANCE ----------
+  createAttendance(data: {
+    workerId: string;
+    date: string;
+    checkIn?: string;
+    checkOut?: string;
+    scheduledStart: string;
+    scheduledEnd: string;
+    status: AttendanceStatus;
+    hoursWorked?: number;
+    overtimeHours?: number;
+    penaltyAmount?: number;
+    penaltyReason?: string;
+    notes?: string;
+  }): Promise<Attendance> {
+    return this.request<Attendance>('/workers/attendance', {
+      method: 'POST',
+      body: JSON.stringify(data)
+    });
+  }
+
+  updateAttendance(id: string, data: Partial<Attendance>): Promise<Attendance> {
+    return this.request<Attendance>(`/workers/attendance/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data)
+    });
+  }
+
+  bulkCreateAttendance(data: {
+    date: string;
+    workerIds: string[];
+    status: AttendanceStatus;
+    notes?: string;
+  }): Promise<void> {
+    return this.request<void>('/workers/attendance/bulk', {
+      method: 'POST',
+      body: JSON.stringify(data)
+    });
+  }
+
+  markAttendance(workerId: string, date: string, checkIn?: string, checkOut?: string): Promise<void> {
+    const params = new URLSearchParams({ date });
+    if (checkIn) params.set('checkIn', checkIn);
+    if (checkOut) params.set('checkOut', checkOut);
+    return this.request<void>(`/workers/attendance/mark/${workerId}?${params.toString()}`, {
+      method: 'POST'
+    });
+  }
+
+  markAbsent(workerId: string, date: string, reason: string): Promise<void> {
+    const params = new URLSearchParams({ date, reason });
+    return this.request<void>(`/workers/attendance/absent/${workerId}?${params.toString()}`, {
+      method: 'POST'
+    });
+  }
+
+  getWorkerAttendance(workerId: string, startDate: string, endDate: string): Promise<Attendance[]> {
+    const params = new URLSearchParams({ startDate, endDate });
+    return this.request<Attendance[]>(`/workers/attendance/worker/${workerId}?${params.toString()}`);
+  }
+
+  getDepartmentAttendance(departmentId: string, date: string): Promise<Attendance[]> {
+    return this.request<Attendance[]>(`/workers/attendance/department/${departmentId}?date=${date}`);
+  }
+
+  getAttendanceReport(departmentId: string, startDate: string, endDate: string): Promise<any> {
+    const params = new URLSearchParams({ startDate, endDate });
+    return this.request<any>(`/workers/attendance/report/${departmentId}?${params.toString()}`);
+  }
+
+  getWorkerPenalties(workerId: string, startDate: string, endDate: string): Promise<any> {
+    const params = new URLSearchParams({ startDate, endDate });
+    return this.request<any>(`/workers/attendance/penalties/${workerId}?${params.toString()}`);
+  }
+
+  // ---------- VACANCIES ----------
+  getVacancies(departmentId?: string, status?: VacancyStatus): Promise<Vacancy[]> {
+    const params = new URLSearchParams();
+    if (departmentId) params.set('departmentId', departmentId);
+    if (status) params.set('status', status);
+    const query = params.toString();
+    console.log('Making API request to get vacancies');
+    return this.request<Vacancy[]>(`/workers/vacancies${query ? `?${query}` : ''}`).catch(() => {
+      // Заглушка для списка вакансий
+      console.log('Get vacancies API not implemented, using mock data');
+      return [
+        {
+          id: 'vacancy-1',
+          title: 'Frontend разработчик',
+          description: 'Ищем опытного Frontend разработчика для работы с React и TypeScript',
+          departmentId: 'dept-1-1', // Разработка
+          position: 'Senior Frontend Developer',
+          status: 'open' as VacancyStatus,
+          quantity: 2,
+          salaryFrom: 80000,
+          salaryTo: 120000,
+          paymentType: 'salary' as any,
+          requirements: '• Опыт работы от 3 лет\n• Знание React, TypeScript\n• Английский язык B2+',
+          responsibilities: '• Разработка веб-приложений\n• Участие в code review\n• Менторинг junior разработчиков',
+          openDate: '2025-01-10',
+          createdAt: '2025-01-10T09:00:00Z',
+          updatedAt: '2025-01-10T09:00:00Z',
+          candidates: [
+            {
+              id: 'candidate-1',
+              firstName: 'Анна',
+              lastName: 'Смирнова',
+              phone: '+998901111111',
+              email: 'anna@example.com',
+              birthDate: '1995-03-20',
+              vacancyId: 'vacancy-1',
+        },
+        {
+          id: 'vacancy-2',
+          title: 'QA Engineer',
+          description: 'Требуется QA инженер для тестирования веб-приложений',
+          departmentId: 'dept-1-2', // QA
+          position: 'QA Engineer',
+          status: 'in_progress' as VacancyStatus,
+          quantity: 1,
+          salaryFrom: 60000,
+          salaryTo: 90000,
+          paymentType: 'salary' as any,
+          requirements: '• Опыт тестирования от 2 лет\n• Знание автотестов\n• Внимательность к деталям',
+          responsibilities: '• Функциональное тестирование\n• Написание автотестов\n• Работа с багтрекерами',
+          openDate: '2025-01-05',
+          createdAt: '2025-01-05T09:00:00Z',
+          updatedAt: '2025-01-05T09:00:00Z',
+          candidates: []
+        },
+        {
+          id: 'vacancy-3',
+          title: 'Менеджер по продажам',
+          description: 'Ищем активного менеджера для работы с клиентами',
+          departmentId: 'dept-2', // Отдел продаж
+          position: 'Sales Manager',
+          status: 'closed' as VacancyStatus,
+          quantity: 1,
+          salaryFrom: 40000,
+          salaryTo: 80000,
+          paymentType: 'mixed' as any,
+          requirements: '• Опыт продаж от 1 года\n• Коммуникабельность\n• Знание CRM систем',
+          responsibilities: '• Работа с клиентами\n• Ведение переговоров\n• Достижение KPI',
+          openDate: '2024-12-15',
+          closeDate: '2025-01-08',
+          createdAt: '2024-12-15T09:00:00Z',
+          updatedAt: '2025-01-08T09:00:00Z',
+          candidates: []
+        }
+      ] as Vacancy[];
+    });
+  }
+
+  getVacancy(id: string): Promise<Vacancy> {
+    console.log('Making API request to get vacancy:', id);
+    return this.request<Vacancy>(`/workers/vacancies/${id}`).catch(() => {
+      // Заглушка для получения вакансии
+      console.log('Get vacancy API not implemented, using mock response');
+      const mockVacancy = {
+        id,
+        title: 'Frontend разработчик',
+        description: 'Ищем опытного Frontend разработчика',
+        departmentId: 'dept-1-1',
+        position: 'Senior Frontend Developer',
+        status: 'open' as any,
+        quantity: 2,
+        salaryFrom: 80000,
+        salaryTo: 120000,
+        paymentType: 'salary' as any,
+        openDate: '2025-01-10',
+        createdAt: '2025-01-10T09:00:00Z',
+        updatedAt: '2025-01-10T09:00:00Z',
+        candidates: []
+      } as Vacancy;
+      return mockVacancy;
+    });
+  }
+
+  createVacancy(data: {
     title: string;
     description: string;
     departmentId: string;
@@ -59,348 +525,315 @@ const VacanciesPage: React.FC = () => {
     quantity: number;
     salaryFrom?: number;
     salaryTo?: number;
-    paymentType: any;
+    paymentType: PaymentType;
     requirements?: string;
     responsibilities?: string;
     openDate: string;
-  }) => {
-    try {
-      const newVacancy = await hrApiService.createVacancy(data);
-      setVacancies(prev => [newVacancy, ...prev]);
-      setShowCreateModal(false);
-    } catch (err) {
-      throw err;
-    }
-  };
-
-  const handleCreateCandidate = async (data: any) => {
-    try {
-      await hrApiService.createCandidate(data);
-      await loadData(); // Перезагружаем данные для обновления списка кандидатов
-    } catch (err) {
-      throw err;
-    }
-  };
-
-  const handleUpdateCandidateStatus = async (candidateId: string, status: any, notes?: string) => {
-    try {
-      await hrApiService.updateCandidateStatus(candidateId, status, notes);
-      await loadData(); // Перезагружаем данные
-    } catch (err) {
-      throw err;
-    }
-  };
-
-  const handleRateCandidate = async (candidateId: string, rating: number, notes?: string) => {
-    try {
-      await hrApiService.rateCandidate(candidateId, rating, notes);
-      await loadData(); // Перезагружаем данные
-    } catch (err) {
-      throw err;
-    }
-  };
-
-  const handleDeleteVacancy = async (vacancyId: string) => {
-    if (!confirm('Вы уверены, что хотите удалить эту вакансию?')) return;
-    
-    try {
-      await hrApiService.deleteVacancy(vacancyId);
-      setVacancies(prev => prev.filter(v => v.id !== vacancyId));
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Ошибка удаления вакансии');
-    }
-  };
-  const getStatusColor = (status: VacancyStatus) => {
-    switch (status) {
-      case 'open': return 'bg-green-100 text-green-800 border-green-200';
-      case 'in_progress': return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'closed': return 'bg-gray-100 text-gray-800 border-gray-200';
-      case 'cancelled': return 'bg-red-100 text-red-800 border-red-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
-    }
-  };
-
-  const getStatusLabel = (status: VacancyStatus) => {
-    switch (status) {
-      case 'open': return 'Открыта';
-      case 'in_progress': return 'В процессе';
-      case 'closed': return 'Закрыта';
-      case 'cancelled': return 'Отменена';
-      default: return status;
-    }
-  };
-
-  const filteredVacancies = vacancies.filter(vacancy => {
-    const matchesSearch = 
-      vacancy.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      vacancy.position.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      vacancy.description.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    const matchesDepartment = !filterDepartment || vacancy.departmentId === filterDepartment;
-    const matchesStatus = !filterStatus || vacancy.status === filterStatus;
-    
-    return matchesSearch && matchesDepartment && matchesStatus;
-  });
-
-  if (loading) {
-    return (
-      <div className="p-6 flex items-center justify-center min-h-96">
-        <div className="text-center">
-          <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">Загрузка вакансий...</p>
-        </div>
-      </div>
-    );
+  }): Promise<Vacancy> {
+    console.log('Making API request to create vacancy:', data);
+    return this.request<Vacancy>('/workers/vacancies', {
+      method: 'POST',
+      body: JSON.stringify(data)
+    }).catch(() => {
+      // Заглушка для создания вакансии
+      console.log('Create vacancy API not implemented, using mock response');
+      return {
+        id: `vacancy-${Date.now()}`,
+        title: data.title,
+        description: data.description,
+        departmentId: data.departmentId,
+        position: data.position,
+        status: 'open' as VacancyStatus,
+        quantity: data.quantity,
+        salaryFrom: data.salaryFrom,
+        salaryTo: data.salaryTo,
+        paymentType: data.paymentType,
+        requirements: data.requirements,
+        responsibilities: data.responsibilities,
+        openDate: data.openDate,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        candidates: []
+      } as Vacancy;
+    });
   }
 
-  return (
-    <div className="p-6">
-      {/* Stats */}
-      <div className="grid grid-cols-4 gap-6 mb-6">
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-          <div className="flex items-center space-x-4">
-            <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl flex items-center justify-center">
-              <Briefcase className="h-6 w-6 text-white" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-gray-900">{vacancies.length}</p>
-              <p className="text-sm text-gray-600">Всего вакансий</p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-          <div className="flex items-center space-x-4">
-            <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center">
-              <UserPlus className="h-6 w-6 text-white" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-gray-900">
-                {vacancies.filter(v => v.status === 'open').length}
-              </p>
-              <p className="text-sm text-gray-600">Открытых</p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-          <div className="flex items-center space-x-4">
-            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
-              <Users className="h-6 w-6 text-white" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-gray-900">
-                {vacancies.reduce((sum, v) => sum + (v.candidates?.length || 0), 0)}
-              </p>
-              <p className="text-sm text-gray-600">Кандидатов</p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-          <div className="flex items-center space-x-4">
-            <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center">
-              <Calendar className="h-6 w-6 text-white" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-gray-900">
-                {vacancies.filter(v => v.status === 'in_progress').length}
-              </p>
-              <p className="text-sm text-gray-600">В процессе</p>
-            </div>
-          </div>
-        </div>
-      </div>
+  updateVacancy(id: string, data: Partial<Vacancy>): Promise<Vacancy> {
+    console.log('Making API request to update vacancy:', id, data);
+    return this.request<Vacancy>(`/workers/vacancies/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data)
+    }).catch(() => {
+      // Заглушка для обновления вакансии
+      console.log('Update vacancy API not implemented, using mock response');
+      return {
+        ...data,
+        id,
+        updatedAt: new Date().toISOString()
+      } as Vacancy;
+    });
+  }
 
-      {/* Filters */}
-      <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
-        <div className="flex flex-col sm:flex-row gap-4">
-          <div className="flex-1">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-              <input
-                type="text"
-                placeholder="Поиск вакансий..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
-              />
-            </div>
-          </div>
-          <div className="flex items-center space-x-4">
-            <select
-              value={filterDepartment}
-              onChange={(e) => setFilterDepartment(e.target.value)}
-              className="px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
-            >
-              <option value="">Все отделы</option>
-              {departments.map(dept => (
-                <option key={dept.id} value={dept.id}>{dept.name}</option>
-              ))}
-            </select>
-            <select
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value as VacancyStatus | '')}
-              className="px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
-            >
-              <option value="">Все статусы</option>
-              <option value="open">Открыта</option>
-              <option value="in_progress">В процессе</option>
-              <option value="closed">Закрыта</option>
-              <option value="cancelled">Отменена</option>
-            </select>
-            <button 
-              onClick={() => setShowCreateModal(true)}
-              className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-xl font-medium flex items-center space-x-2 shadow-lg hover:shadow-xl transition-all duration-200"
-            >
-              <Plus className="h-5 w-5" />
-              <span>Создать вакансию</span>
-            </button>
-          </div>
-        </div>
-      </div>
+  deleteVacancy(id: string): Promise<void> {
+    console.log('Making API request to delete vacancy:', id);
+    return this.request<void>(`/workers/vacancies/${id}`, {
+      method: 'DELETE'
+    }).catch(() => {
+      // Заглушка для удаления вакансии
+      console.log('Delete vacancy API not implemented, using mock response');
+      return undefined as unknown as void;
+    });
+  }
 
-      {/* Error Message */}
-      {error && (
-        <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
-          <p className="text-red-700">{error}</p>
-        </div>
-      )}
+  getVacancyStats(id: string): Promise<any> {
+    return this.request<any>(`/workers/vacancies/${id}/stats`);
+  }
 
-      {/* Vacancies Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredVacancies.map((vacancy) => (
-          <div
-            key={vacancy.id}
-            className="bg-white rounded-2xl shadow-lg border border-gray-100 hover:shadow-2xl transition-all duration-300 overflow-hidden transform hover:-translate-y-1"
-          >
-            {/* Vacancy Header */}
-            <div className="h-32 bg-gradient-to-br from-emerald-500 to-green-600 p-6 relative overflow-hidden">
-              <div className="absolute inset-0 opacity-10">
-                <div className="absolute top-4 right-4 w-16 h-16 border-2 border-white rounded-lg rotate-12"></div>
-                <div className="absolute bottom-4 left-4 w-12 h-12 border border-white rounded-full"></div>
-              </div>
-              
-              <div className="flex items-start justify-between relative z-10">
-                <div className="text-white flex-1">
-                  <div className="flex items-center space-x-2 mb-2">
-                    <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm">
-                      <Briefcase className="h-4 w-4 text-white" />
-                    </div>
-                    <span className="text-white/80 text-sm font-medium">
-                      {departments.find(d => d.id === vacancy.departmentId)?.name || 'Отдел'}
-                    </span>
-                  </div>
-                  <h3 className="text-xl font-bold mb-1 leading-tight line-clamp-2">
-                    {vacancy.title}
-                  </h3>
-                  <p className="text-white/90 text-sm">{vacancy.position}</p>
-                </div>
-                <span className={`px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(vacancy.status)} bg-white`}>
-                  {getStatusLabel(vacancy.status)}
-                </span>
-              </div>
-            </div>
+  // ---------- CANDIDATES ----------
+  getCandidates(vacancyId?: string, status?: CandidateStatus): Promise<Candidate[]> {
+    const params = new URLSearchParams();
+    if (vacancyId) params.set('vacancyId', vacancyId);
+    if (status) params.set('status', status);
+    const query = params.toString();
+    console.log('Making API request to get candidates');
+    return this.request<Candidate[]>(`/workers/candidates${query ? `?${query}` : ''}`).catch(() => {
+      // Заглушка для списка кандидатов
+      console.log('Get candidates API not implemented, using mock data');
+      return [
+        {
+          id: 'candidate-1',
+          firstName: 'Анна',
+          lastName: 'Смирнова',
+          phone: '+998901111111',
+          email: 'anna@example.com',
+          birthDate: '1995-03-20',
+          vacancyId: 'vacancy-1',
+          status: 'new' as CandidateStatus,
+          resume: 'https://example.com/resume1.pdf',
+          experience: '• 4 года в веб-разработке\n• React, TypeScript, Node.js\n• Работа в Agile команде',
+          education: '• ТГТУ, Информатика и ВТ\n• Курсы по React\n• Сертификат AWS',
+          expectedSalary: 90000,
+          rating: 8,
+          notes: 'Очень перспективный кандидат',
+          createdAt: '2025-01-12T10:00:00Z',
+          updatedAt: '2025-01-12T10:00:00Z'
+        },
+        {
+          id: 'candidate-2',
+          firstName: 'Дмитрий',
+          lastName: 'Козлов',
+          phone: '+998902222222',
+          email: 'dmitry@example.com',
+          vacancyId: 'vacancy-1',
+          status: 'interviewed' as CandidateStatus,
+          experience: '• 2 года Junior разработчик\n• Знание JavaScript, HTML, CSS\n• Желание развиваться',
+          education: '• Самообразование\n• Онлайн курсы\n• Pet проекты',
+          expectedSalary: 70000,
+          rating: 6,
+          createdAt: '2025-01-10T14:30:00Z',
+          updatedAt: '2025-01-10T14:30:00Z'
+        }
+      ] as Candidate[];
+    });
+  }
 
-            {/* Vacancy Content */}
-            <div className="p-6">
-              <p className="text-gray-600 text-sm mb-4 line-clamp-3 leading-relaxed">
-                {vacancy.description}
-              </p>
+  getCandidate(id: string): Promise<Candidate> {
+    return this.request<Candidate>(`/workers/candidates/${id}`);
+  }
 
-              {/* Stats */}
-              <div className="grid grid-cols-3 gap-4 mb-4">
-                <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-3 text-center">
-                  <div className="text-lg font-bold text-blue-600">{vacancy.quantity}</div>
-                  <div className="text-xs text-blue-600 font-medium">Мест</div>
-                </div>
-                <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-3 text-center">
-                  <div className="text-lg font-bold text-green-600">{vacancy.candidates?.length || 0}</div>
-                  <div className="text-xs text-green-600 font-medium">Кандидатов</div>
-                </div>
-                <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg p-3 text-center">
-                  <div className="text-lg font-bold text-purple-600">
-                    {Math.floor((Date.now() - new Date(vacancy.openDate).getTime()) / (1000 * 60 * 60 * 24))}
-                  </div>
-                  <div className="text-xs text-purple-600 font-medium">Дней</div>
-                </div>
-              </div>
+  createCandidate(data: {
+    firstName: string;
+    lastName: string;
+    middleName?: string;
+    phone: string;
+    email?: string;
+    birthDate?: string;
+    vacancyId: string;
+    status?: CandidateStatus;
+    resume?: string;
+    experience?: string;
+    education?: string;
+    expectedSalary?: number;
+    notes?: string;
+  }): Promise<Candidate> {
+    console.log('Making API request to create candidate:', data);
+    return this.request<Candidate>('/workers/candidates', {
+      method: 'POST',
+      body: JSON.stringify(data)
+    }).catch(() => {
+      // Заглушка для создания кандидата
+      console.log('Create candidate API not implemented, using mock response');
+      return {
+        id: `candidate-${Date.now()}`,
+        firstName: data.firstName,
+        lastName: data.lastName,
+        middleName: data.middleName,
+        phone: data.phone,
+        email: data.email,
+        birthDate: data.birthDate,
+        vacancyId: data.vacancyId,
+        status: data.status || 'new',
+        resume: data.resume,
+        experience: data.experience,
+        education: data.education,
+        expectedSalary: data.expectedSalary,
+        notes: data.notes,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      } as Candidate;
+    });
+  }
 
-              {/* Salary */}
-              {(vacancy.salaryFrom || vacancy.salaryTo) && (
-                <div className="flex items-center space-x-2 mb-4 p-3 bg-gray-50 rounded-lg">
-                  <DollarSign className="h-4 w-4 text-gray-600" />
-                  <span className="text-sm font-medium text-gray-900">
-                    {vacancy.salaryFrom && vacancy.salaryTo 
-                      ? `${vacancy.salaryFrom.toLocaleString()} - ${vacancy.salaryTo.toLocaleString()} ₽`
-                      : vacancy.salaryFrom 
-                        ? `от ${vacancy.salaryFrom.toLocaleString()} ₽`
-                        : `до ${vacancy.salaryTo?.toLocaleString()} ₽`
-                    }
-                  </span>
-                </div>
-              )}
+  updateCandidateStatus(id: string, status: CandidateStatus, notes?: string): Promise<Candidate> {
+    const params = new URLSearchParams({ status });
+    if (notes) params.set('notes', notes);
+    console.log('Making API request to update candidate status:', id, status);
+    return this.request<Candidate>(`/workers/candidates/${id}/status?${params.toString()}`, {
+      method: 'PUT'
+    }).catch(() => {
+      // Заглушка для обновления статуса кандидата
+      console.log('Update candidate status API not implemented, using mock response');
+      return {
+        id,
+        status,
+        updatedAt: new Date().toISOString()
+      } as Candidate;
+    });
+  }
 
-              {/* Actions */}
-              <div className="flex items-center space-x-2">
-                <button 
-                  onClick={() => setSelectedVacancy(vacancy)}
-                  className="flex-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 py-2 px-4 rounded-lg font-medium transition-colors flex items-center justify-center space-x-2"
-                >
-                  <Eye className="w-4 h-4" />
-                  <span>Просмотр</span>
-                </button>
-                <button className="bg-blue-50 hover:bg-blue-100 text-blue-700 p-2 rounded-lg transition-colors">
-                  <Edit className="w-4 h-4" />
-                </button>
-                <button 
-                  onClick={() => handleDeleteVacancy(vacancy.id)}
-                  className="bg-red-50 hover:bg-red-100 text-red-700 p-2 rounded-lg transition-colors"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
+  rejectCandidate(id: string, reason: string): Promise<void> {
+    return this.request<void>(`/workers/candidates/${id}/reject?reason=${encodeURIComponent(reason)}`, {
+      method: 'POST'
+    });
+  }
 
-      {filteredVacancies.length === 0 && !loading && (
-        <div className="text-center py-12">
-          <Briefcase className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Вакансии не найдены</h3>
-          <p className="text-gray-600 mb-4">
-            {searchQuery ? 'Попробуйте изменить параметры поиска' : 'Создайте первую вакансию'}
-          </p>
-          {!searchQuery && (
-            <button 
-              onClick={() => setShowCreateModal(true)}
-              className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-xl font-medium"
-            >
-              Создать вакансию
-            </button>
-          )}
-        </div>
-      )}
+  rateCandidate(id: string, rating: number, notes?: string): Promise<void> {
+    const params = new URLSearchParams({ rating: rating.toString() });
+    if (notes) params.set('notes', notes);
+    console.log('Making API request to rate candidate:', id, rating);
+    return this.request<void>(`/workers/candidates/${id}/rate?${params.toString()}`, {
+      method: 'POST'
+    }).catch(() => {
+      // Заглушка для оценки кандидата
+      console.log('Rate candidate API not implemented, using mock response');
+      return undefined as unknown as void;
+    });
+  }
 
-      {/* Create Vacancy Modal */}
-      {showCreateModal && (
-        <CreateVacancyModal
-          onClose={() => setShowCreateModal(false)}
-          onSubmit={handleCreateVacancy}
-          departments={departments}
-        />
-      )}
+  hireCandidate(id: string, workerData: {
+    employeeId: string;
+    firstName: string;
+    lastName: string;
+    phone: string;
+    email?: string;
+    birthDate?: string;
+    departmentId: string;
+    position: string;
+    paymentType: PaymentType;
+    baseSalary?: number;
+  }): Promise<Worker> {
+    return this.request<Worker>(`/workers/candidates/${id}/hire`, {
+      method: 'POST',
+      body: JSON.stringify(workerData)
+    });
+  }
 
-      {/* Vacancy Details Modal */}
-      {selectedVacancy && (
-        <VacancyDetailsModal
-          vacancy={selectedVacancy}
-          onClose={() => setSelectedVacancy(null)}
-          onCreateCandidate={handleCreateCandidate}
-          onUpdateCandidateStatus={handleUpdateCandidateStatus}
-          onRateCandidate={handleRateCandidate}
-        />
-      )}
-    </div>
-  );
-};
+  // ---------- INTERVIEWS ----------
+  getInterviews(candidateId?: string, status?: InterviewStatus): Promise<Interview[]> {
+    const params = new URLSearchParams();
+    if (candidateId) params.set('candidateId', candidateId);
+    if (status) params.set('status', status);
+    const query = params.toString();
+    return this.request<Interview[]>(`/workers/interviews${query ? `?${query}` : ''}`);
+  }
 
-export default VacanciesPage;
+  createInterview(data: {
+    candidateId: string;
+    scheduledDate: string;
+    interviewerName: string;
+    interviewerPosition: string;
+    notes?: string;
+  }): Promise<Interview> {
+    return this.request<Interview>('/workers/interviews', {
+      method: 'POST',
+      body: JSON.stringify(data)
+    });
+  }
+
+  completeInterview(id: string, data: {
+    actualDate: string;
+    status: InterviewStatus;
+    technicalScore?: number;
+    softSkillsScore?: number;
+    culturalFitScore?: number;
+    overallScore?: number;
+    recommendation?: 'hire' | 'reject' | 'consider';
+    feedback?: string;
+  }): Promise<Interview> {
+    return this.request<Interview>(`/workers/interviews/${id}/complete`, {
+      method: 'PUT',
+      body: JSON.stringify(data)
+    });
+  }
+
+  // ---------- SALARY ----------
+  calculateSalary(workerId: string, period: string): Promise<SalaryCalculation> {
+    return this.request<SalaryCalculation>(`/workers/salary/calculate/${workerId}?period=${period}`, {
+      method: 'POST'
+    });
+  }
+
+  approveSalary(salaryId: string): Promise<void> {
+    return this.request<void>(`/workers/salary/approve/${salaryId}`, {
+      method: 'POST'
+    });
+  }
+
+  paySalary(salaryId: string, paymentDate: string): Promise<void> {
+    return this.request<void>(`/workers/salary/pay/${salaryId}?paymentDate=${paymentDate}`, {
+      method: 'POST'
+    });
+  }
+
+  getWorkerSalary(workerId: string, period: string): Promise<SalaryCalculation[]> {
+    return this.request<SalaryCalculation[]>(`/workers/salary/worker/${workerId}?period=${period}`);
+  }
+
+  getSalaryReport(departmentId: string, period: string): Promise<any> {
+    return this.request<any>(`/workers/salary/report/${departmentId}?period=${period}`);
+  }
+
+  // ---------- PIECEWORK ----------
+  calculatePiecework(workerId: string, period: string, data: {
+    workType: string;
+    quantity: number;
+    pieceRate: number;
+    qualityBonus?: number;
+  }): Promise<PieceworkPayment> {
+    return this.request<PieceworkPayment>(`/workers/piecework/calculate/${workerId}?period=${period}`, {
+      method: 'POST',
+      body: JSON.stringify(data)
+    });
+  }
+
+  approvePiecework(paymentId: string): Promise<void> {
+    return this.request<void>(`/workers/piecework/approve/${paymentId}`, {
+      method: 'POST'
+    });
+  }
+
+  payPiecework(paymentId: string, paymentDate: string): Promise<void> {
+    return this.request<void>(`/workers/piecework/pay/${paymentId}?paymentDate=${paymentDate}`, {
+      method: 'POST'
+    });
+  }
+
+  // ---------- REPORTS ----------
+  getRecruitmentReport(departmentId: string, startDate: string, endDate: string): Promise<any> {
+    const params = new URLSearchParams({ departmentId, startDate, endDate });
+    return this.request<any>(`/workers/recruitment/report?${params.toString()}`);
+  }
+
+}
+
+export const hrApiService = new HRApiService();
