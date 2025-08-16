@@ -424,82 +424,83 @@ class HRApiService {
     return this.request<Vacancy[]>(`/workers/vacancies${query ? `?${query}` : ''}`).catch(() => {
       // Заглушка для списка вакансий
       console.log('Get vacancies API not implemented, using mock data');
-      return [
-        {
-          id: 'vacancy-1',
-          title: 'Frontend разработчик',
-          description: 'Ищем опытного Frontend разработчика для работы с React и TypeScript',
-          departmentId: 'dept-1-1', // Разработка
-          position: 'Senior Frontend Developer',
-          status: 'open' as VacancyStatus,
-          quantity: 2,
-          salaryFrom: 80000,
-          salaryTo: 120000,
-          paymentType: 'salary' as any,
-          requirements: '• Опыт работы от 3 лет\n• Знание React, TypeScript\n• Английский язык B2+',
-          responsibilities: '• Разработка веб-приложений\n• Участие в code review\n• Менторинг junior разработчиков',
-          openDate: '2025-01-10',
-          createdAt: '2025-01-10T09:00:00Z',
-          updatedAt: '2025-01-10T09:00:00Z',
-          candidates: [
-            {
-              id: 'candidate-1',
-              firstName: 'Анна',
-              lastName: 'Смирнова',
-              phone: '+998901111111',
-              email: 'anna@example.com',
-              birthDate: '1995-03-20',
-              vacancyId: 'vacancy-1',
-              status: 'new' as CandidateStatus,
-              resume: 'https://example.com/resume1.pdf',
-              experience: '• 4 года в веб-разработке\n• React, TypeScript, Node.js\n• Работа в Agile команде',
-              education: '• ТГТУ, Информатика и ВТ\n• Курсы по React\n• Сертификат AWS',
-              expectedSalary: 90000,
-              rating: 8,
-              notes: 'Очень перспективный кандидат',
-              createdAt: '2025-01-12T10:00:00Z',
-              updatedAt: '2025-01-12T10:00:00Z'
-            }
-          ]
-        },
-        {
-          id: 'vacancy-2',
-          title: 'QA Engineer',
-          description: 'Требуется QA инженер для тестирования веб-приложений',
-          departmentId: 'dept-1-2', // QA
-          position: 'QA Engineer',
-          status: 'in_progress' as VacancyStatus,
-          quantity: 1,
-          salaryFrom: 60000,
-          salaryTo: 90000,
-          paymentType: 'salary' as any,
-          requirements: '• Опыт тестирования от 2 лет\n• Знание автотестов\n• Внимательность к деталям',
-          responsibilities: '• Функциональное тестирование\n• Написание автотестов\n• Работа с багтрекерами',
-          openDate: '2025-01-05',
-          createdAt: '2025-01-05T09:00:00Z',
-          updatedAt: '2025-01-05T09:00:00Z',
-          candidates: []
-        },
-        {
-          id: 'vacancy-3',
-          title: 'Менеджер по продажам',
-          description: 'Ищем активного менеджера для работы с клиентами',
-          departmentId: 'dept-2', // Отдел продаж
-          position: 'Sales Manager',
-          status: 'closed' as VacancyStatus,
-          quantity: 1,
-          salaryFrom: 40000,
-          salaryTo: 80000,
-          paymentType: 'mixed' as any,
-          requirements: '• Опыт продаж от 1 года\n• Коммуникабельность\n• Знание CRM систем',
-          responsibilities: '• Работа с клиентами\n• Ведение переговоров\n• Достижение KPI',
-          openDate: '2024-12-15',
-          closeDate: '2025-01-08',
-          createdAt: '2024-12-15T09:00:00Z',
-          updatedAt: '2025-01-08T09:00:00Z',
-          candidates: []
-        }
-      ] as Vacancy[];
+return [
+  {
+    id: 'vacancy-1',
+    title: 'Frontend разработчик',
+    description: 'Ищем опытного Frontend разработчика для работы с React и TypeScript',
+    departmentId: 'dept-1-1', // Разработка
+    position: 'Senior Frontend Developer',
+    status: 'open' as VacancyStatus,
+    quantity: 2,
+    salaryFrom: 80000,
+    salaryTo: 120000,
+    paymentType: 'salary' as any,
+    requirements: '• Опыт работы от 3 лет\n• Знание React, TypeScript\n• Английский язык B2+',
+    responsibilities: '• Разработка веб-приложений\n• Участие в code review\n• Менторинг junior разработчиков',
+    openDate: '2025-01-10',
+    createdAt: '2025-01-10T09:00:00Z',
+    updatedAt: '2025-01-10T09:00:00Z',
+    candidates: [
+      {
+        id: 'candidate-1',
+        firstName: 'Анна',
+        lastName: 'Смирнова',
+        phone: '+998901111111',
+        email: 'anna@example.com',
+        birthDate: '1995-03-20',
+        vacancyId: 'vacancy-1',
+        status: 'new' as CandidateStatus,
+        resume: 'https://example.com/resume1.pdf',
+        experience: '• 4 года в веб-разработке\n• React, TypeScript, Node.js\n• Работа в Agile команде',
+        education: '• ТГТУ, Информатика и ВТ\n• Курсы по React\n• Сертификат AWS',
+        expectedSalary: 90000,
+        rating: 8,
+        notes: 'Очень перспективный кандидат',
+        createdAt: '2025-01-12T10:00:00Z',
+        updatedAt: '2025-01-12T10:00:00Z'
+      }
+    ]
+  },
+  {
+    id: 'vacancy-2',
+    title: 'QA Engineer',
+    description: 'Требуется QA инженер для тестирования веб-приложений',
+    departmentId: 'dept-1-2', // QA
+    position: 'QA Engineer',
+    status: 'in_progress' as VacancyStatus,
+    quantity: 1,
+    salaryFrom: 60000,
+    salaryTo: 90000,
+    paymentType: 'salary' as any,
+    requirements: '• Опыт тестирования от 2 лет\n• Знание автотестов\n• Внимательность к деталям',
+    responsibilities: '• Функциональное тестирование\n• Написание автотестов\n• Работа с багтрекерами',
+    openDate: '2025-01-05',
+    createdAt: '2025-01-05T09:00:00Z',
+    updatedAt: '2025-01-05T09:00:00Z',
+    candidates: []
+  },
+  {
+    id: 'vacancy-3',
+    title: 'Менеджер по продажам',
+    description: 'Ищем активного менеджера для работы с клиентами',
+    departmentId: 'dept-2', // Отдел продаж
+    position: 'Sales Manager',
+    status: 'closed' as VacancyStatus,
+    quantity: 1,
+    salaryFrom: 40000,
+    salaryTo: 80000,
+    paymentType: 'mixed' as any,
+    requirements: '• Опыт продаж от 1 года\n• Коммуникабельность\n• Знание CRM систем',
+    responsibilities: '• Работа с клиентами\n• Ведение переговоров\n• Достижение KPI',
+    openDate: '2024-12-15',
+    closeDate: '2025-01-08',
+    createdAt: '2024-12-15T09:00:00Z',
+    updatedAt: '2025-01-08T09:00:00Z',
+    candidates: []
+  }
+] as Vacancy[];
+
     });
   }
 
