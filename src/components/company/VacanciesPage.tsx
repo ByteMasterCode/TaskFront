@@ -340,7 +340,6 @@ const VacanciesPage: React.FC = () => {
 
               {/* Actions */}
               <div className="flex items-center space-x-2">
-                <button className="flex-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 py-2 px-4 rounded-lg font-medium transition-colors flex items-center justify-center space-x-2">
                 <button 
                   onClick={() => setSelectedVacancy(vacancy)}
                   className="flex-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 py-2 px-4 rounded-lg font-medium transition-colors flex items-center justify-center space-x-2"
@@ -350,9 +349,6 @@ const VacanciesPage: React.FC = () => {
                 </button>
                 <button className="bg-blue-50 hover:bg-blue-100 text-blue-700 p-2 rounded-lg transition-colors">
                   <Edit className="w-4 h-4" />
-                </button>
-                <button className="bg-red-50 hover:bg-red-100 text-red-700 p-2 rounded-lg transition-colors">
-                  <Trash2 className="w-4 h-4" />
                 </button>
                 <button 
                   onClick={() => handleDeleteVacancy(vacancy.id)}
