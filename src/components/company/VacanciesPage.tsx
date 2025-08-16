@@ -16,6 +16,7 @@ import {
 import { Vacancy, Department, VacancyStatus } from '../../types';
 import { hrApiService } from '../../services/hrApi';
 import CreateVacancyModal from './CreateVacancyModal';
+import VacancyDetailsModal from './VacancyDetailsModal';
 
 const VacanciesPage: React.FC = () => {
   const [vacancies, setVacancies] = useState<Vacancy[]>([]);
@@ -26,6 +27,7 @@ const VacanciesPage: React.FC = () => {
   const [filterDepartment, setFilterDepartment] = useState<string>('');
   const [filterStatus, setFilterStatus] = useState<VacancyStatus | ''>('');
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [selectedVacancy, setSelectedVacancy] = useState<Vacancy | null>(null);
 
   useEffect(() => {
     loadData();
@@ -66,6 +68,33 @@ const VacanciesPage: React.FC = () => {
       const newVacancy = await hrApiService.createVacancy(data);
       setVacancies(prev => [newVacancy, ...prev]);
       setShowCreateModal(false);
+    } catch (err) {
+      throw err;
+    }
+  };
+
+  const handleCreateCandidate = async (data: any) => {
+    try {
+      await hrApiService.createCandidate(data);
+      await loadData(); // Перезагружаем данные для обновления списка кандидатов
+    } catch (err) {
+      throw err;
+    }
+  };
+
+  const handleUpdateCandidateStatus = async (candidateId: string, status: any, notes?: string) => {
+    try {
+      await hrApiService.updateCandidateStatus(candidateId, status, notes);
+      await loadData(); // Перезагружаем данные
+    } catch (err) {
+      throw err;
+    }
+  };
+
+  const handleRateCandidate = async (candidateId: string, rating: number, notes?: string) => {
+    try {
+      await hrApiService.rateCandidate(candidateId, rating, notes);
+      await loadData(); // Перезагружаем данные
     } catch (err) {
       throw err;
     }
@@ -312,6 +341,10 @@ const VacanciesPage: React.FC = () => {
               {/* Actions */}
               <div className="flex items-center space-x-2">
                 <button className="flex-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 py-2 px-4 rounded-lg font-medium transition-colors flex items-center justify-center space-x-2">
+                <button 
+                  onClick={() => setSelectedVacancy(vacancy)}
+                  className="flex-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 py-2 px-4 rounded-lg font-medium transition-colors flex items-center justify-center space-x-2"
+                >
                   <Eye className="w-4 h-4" />
                   <span>Просмотр</span>
                 </button>
@@ -357,6 +390,17 @@ const VacanciesPage: React.FC = () => {
           onClose={() => setShowCreateModal(false)}
           onSubmit={handleCreateVacancy}
           departments={departments}
+        />
+      )}
+
+      {/* Vacancy Details Modal */}
+      {selectedVacancy && (
+        <VacancyDetailsModal
+          vacancy={selectedVacancy}
+          onClose={() => setSelectedVacancy(null)}
+          onCreateCandidate={handleCreateCandidate}
+          onUpdateCandidateStatus={handleUpdateCandidateStatus}
+          onRateCandidate={handleRateCandidate}
         />
       )}
     </div>
