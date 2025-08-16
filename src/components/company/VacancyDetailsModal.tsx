@@ -426,21 +426,21 @@ class HRApiService {
       console.log('Get vacancies API not implemented, using mock data');
       return [
         {
-          id: 'vacancy-1',
-          title: 'Frontend разработчик',
-          description: 'Ищем опытного Frontend разработчика для работы с React и TypeScript',
-          departmentId: 'dept-1-1', // Разработка
-          position: 'Senior Frontend Developer',
-          status: 'open' as VacancyStatus,
-          quantity: 2,
-          salaryFrom: 80000,
-          salaryTo: 120000,
-          paymentType: 'salary' as any,
-          requirements: '• Опыт работы от 3 лет\n• Знание React, TypeScript\n• Английский язык B2+',
-          responsibilities: '• Разработка веб-приложений\n• Участие в code review\n• Менторинг junior разработчиков',
-          openDate: '2025-01-10',
-          createdAt: '2025-01-10T09:00:00Z',
-          updatedAt: '2025-01-10T09:00:00Z',
+  id: 'vacancy-1',
+  title: 'Frontend разработчик',
+  description: 'Ищем опытного Frontend разработчика для работы с React и TypeScript',
+  departmentId: 'dept-1-1', // Разработка
+  position: 'Senior Frontend Developer',
+  status: 'open' as VacancyStatus,
+  quantity: 2,
+  salaryFrom: 80000,
+  salaryTo: 120000,
+  paymentType: 'salary' as any,
+  requirements: '• Опыт работы от 3 лет\n• Знание React, TypeScript\n• Английский язык B2+',
+  responsibilities: '• Разработка веб-приложений\n• Участие в code review\n• Менторинг junior разработчиков',
+  openDate: '2025-01-10',
+  createdAt: '2025-01-10T09:00:00Z',
+  updatedAt: '2025-01-10T09:00:00Z',
           candidates: [
             {
               id: 'candidate-1',
@@ -450,54 +450,18 @@ class HRApiService {
               email: 'anna@example.com',
               birthDate: '1995-03-20',
               vacancyId: 'vacancy-1',
-            }
-            {
-              id: 'candidate-1',
-              firstName: 'Анна',
-              lastName: 'Смирнова',
-              phone: '+998901111111',
-              email: 'anna@example.com',
-              birthDate: '1995-03-20',
-              vacancyId: 'vacancy-1',
-            }
-            {
-              id: 'candidate-1',
-              firstName: 'Анна',
-              lastName: 'Смирнова',
-              phone: '+998901111111',
-              email: 'anna@example.com',
-              birthDate: '1995-03-20',
-              vacancyId: 'vacancy-1',
-            }
-            {
-              id: 'candidate-1',
-              firstName: 'Анна',
-              lastName: 'Смирнова',
-              phone: '+998901111111',
-              email: 'anna@example.com',
-              birthDate: '1995-03-20',
-              vacancyId: 'vacancy-1',
-            }
-            {
-              id: 'candidate-1',
-              firstName: 'Анна',
-              lastName: 'Смирнова',
-              phone: '+998901111111',
-              email: 'anna@example.com',
-              birthDate: '1995-03-20',
-              vacancyId: 'vacancy-1',
-            }
-            {
-              id: 'candidate-1',
-              firstName: 'Анна',
-              lastName: 'Смирнова',
-              phone: '+998901111111',
-              email: 'anna@example.com',
-              birthDate: '1995-03-20',
-              vacancyId: 'vacancy-1',
-                    },
-          ]
-        }
+    {
+      id: 'candidate-1',
+      firstName: 'Анна',
+      lastName: 'Смирнова',
+      phone: '+998901111111',
+      email: 'anna@example.com',
+      birthDate: '1995-03-20',
+      vacancyId: 'vacancy-1',
+    }
+  ]
+},
+,
         {
           id: 'vacancy-2',
           title: 'QA Engineer',
